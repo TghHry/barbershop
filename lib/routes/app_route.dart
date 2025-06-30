@@ -1,6 +1,6 @@
 import 'package:barbershop2/presentations/admin/auth/login/screens/login_screen.dart'; // Ensure correct path for LoginScreen
 import 'package:barbershop2/presentations/admin/auth/register/screens/register_screen.dart'; // Ensure correct path for RegisterScreen
-import 'package:barbershop2/presentations/admin/barbershop/list_service/add_service/screens/add_service_screen.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/add_service/screens/add_service_screen.dart';
 // import 'package:barbershop2/presentations/admin/barbershop/booking/screens/booking_screen.dart';
 import 'package:barbershop2/presentations/admin/barbershop/history/history_models/history_model.dart';
 import 'package:barbershop2/presentations/admin/barbershop/history/history_screens/history_screen.dart';
