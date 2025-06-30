@@ -1,268 +1,343 @@
-import 'package:barbershop2/presentations/admin/barbershop/list_service/booking/models/booking_model.dart';
-import 'package:barbershop2/presentations/admin/barbershop/list_service/booking/service/booking_service.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; // Untuk navigasi setelah booking
-import 'package:shared_preferences/shared_preferences.dart'; // Untuk mendapatkan user ID
+import 'package:image_picker/image_picker.dart'; // Untuk memilih gambar
+import 'dart:io'; // Untuk File
+// import 'package:go_router/go_router.dart'; // Untuk navigasi (jika digunakan)
 import 'package:flutter/foundation.dart'; // Untuk debugPrint
-import 'package:intl/intl.dart'; // Untuk format tanggal/waktu
-
-// Impor model dan service yang diperlukan
-import 'package:barbershop2/presentations/admin/barbershop/history/history_models/history_model.dart'; // Model BookingHistoryItem
-// import 'package:barbershop2/presentations/admin/barbershop/history/service/history_service.dart'; // BookingService (untuk createBooking)
-// import 'package:barbershop2/presentations/admin/barbershop/history/add_service/models/add_service_models.dart'; // BookingResponse model
+// Pastikan import model AddServiceResponse Anda sesuai dengan lokasi file:
+import 'package:barbershop2/presentations/admin/barbershop/list_service/add_service/models/add_service_models.dart';
+// Pastikan import service ServiceManagementService Anda sesuai dengan lokasi file:
+import 'package:barbershop2/presentations/admin/barbershop/list_service/add_service/service/add_service_service.dart';
 
 class AddBooking extends StatefulWidget {
-  final BookingHistoryItem booking; // Layar ini menerima item booking dari riwayat
-
-  const AddBooking({super.key, required this.booking});
+  const AddBooking({super.key});
 
   @override
   State<AddBooking> createState() => _AddBookingState();
 }
 
 class _AddBookingState extends State<AddBooking> {
-  final BookingService _bookingService = BookingService();
-  bool _isLoading = false;
+  final _formKey = GlobalKey<FormState>(); // Kunci untuk form validation
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _employeeNameController = TextEditingController();
 
-  // Variabel untuk menyimpan tanggal dan waktu booking yang baru
-  DateTime? _selectedDate;
-  TimeOfDay? _selectedTime;
+  File? _employeePhotoFile; // File foto karyawan yang dipilih
+  File? _servicePhotoFile; // File foto layanan yang dipilih
+
+  bool _isLoading = false;
+  String? _statusMessage; // Untuk menampilkan pesan sukses/error
+  final ServiceManagementService _service =
+      ServiceManagementService(); // Instansiasi service Anda
 
   @override
-  void initState() {
-    super.initState();
-    // Inisialisasi dengan tanggal/waktu saat ini sebagai default untuk booking baru
-    _selectedDate = DateTime.now();
-    _selectedTime = TimeOfDay.now();
-
-    debugPrint('AddBooking: Memulai re-booking untuk layanan: ${widget.booking.service.name}');
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    _priceController.dispose();
+    _employeeNameController.dispose();
+    super.dispose();
   }
 
-  // Fungsi untuk menampilkan date picker
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime.now(), // Hanya izinkan tanggal dari hari ini ke depan
-      lastDate: DateTime(2026), // Batasi hingga tahun 2026
-    );
-    if (pickedDate != null && pickedDate != _selectedDate) {
+  // Fungsi untuk memilih gambar dari galeri
+  Future<void> _pickImage(
+    ImageSource source, {
+    required bool isEmployeePhoto,
+  }) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickImage(source: source);
+
+    if (pickedFile != null) {
       setState(() {
-        _selectedDate = pickedDate;
+        if (isEmployeePhoto) {
+          _employeePhotoFile = File(pickedFile.path);
+          debugPrint(
+            'AddBooking: FOTO KARYAWAN DIPILIH. Path: ${_employeePhotoFile!.path}',
+          );
+        } else {
+          _servicePhotoFile = File(pickedFile.path);
+          debugPrint(
+            'AddBooking: FOTO LAYANAN DIPILIH. Path: ${_servicePhotoFile!.path}',
+          );
+        }
       });
-      debugPrint('AddBooking: Tanggal baru dipilih: $_selectedDate');
+    } else {
+      debugPrint('AddBooking: Pemilihan gambar dibatalkan oleh pengguna.');
     }
   }
 
-  // Fungsi untuk menampilkan time picker
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime ?? TimeOfDay.now(),
-    );
-    if (pickedTime != null && pickedTime != _selectedTime) {
-      setState(() {
-        _selectedTime = pickedTime;
-      });
-      debugPrint('AddBooking: Waktu baru dipilih: $_selectedTime');
-    }
-  }
-
-  // Fungsi untuk mengirim permintaan booking baru
-  Future<void> _createRebooking() async {
-    if (_selectedDate == null || _selectedTime == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Mohon pilih tanggal dan waktu untuk booking baru Anda.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-      debugPrint('AddBooking: Tanggal atau waktu booking baru belum dipilih.');
+  // Fungsi untuk menangani proses penambahan layanan
+  Future<void> _addService() async {
+    if (!_formKey.currentState!.validate()) {
+      debugPrint('AddBooking: Validasi form gagal. Isi semua kolom wajib.');
       return;
     }
 
+    // --- PENTING: Debugging di sini ---
+    debugPrint('AddBooking: Memeriksa keberadaan file foto sebelum dikirim...');
+    if (_employeePhotoFile == null || !await _employeePhotoFile!.exists()) {
+      _showSnackBar(
+        'Pilih foto karyawan terlebih dahulu atau file tidak ada.',
+        Colors.red,
+      );
+      debugPrint(
+        'AddBooking: ERROR: Foto karyawan NULL atau TIDAK ADA di path: ${_employeePhotoFile?.path}',
+      );
+      return;
+    }
+    if (_servicePhotoFile == null || !await _servicePhotoFile!.exists()) {
+      _showSnackBar(
+        'Pilih foto layanan terlebih dahulu atau file tidak ada.',
+        Colors.red,
+      );
+      debugPrint(
+        'AddBooking: ERROR: Foto layanan NULL atau TIDAK ADA di path: ${_servicePhotoFile?.path}',
+      );
+      return;
+    }
+    debugPrint(
+      'AddBooking: FOTO KARYAWAN DITEMUKAN di path: ${_employeePhotoFile!.path}',
+    );
+    debugPrint(
+      'AddBooking: FOTO LAYANAN DITEMUKAN di path: ${_servicePhotoFile!.path}',
+    );
+
     setState(() {
-      _isLoading = true; // Set status loading
+      _isLoading = true;
+      _statusMessage = null; // Reset pesan status
     });
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getInt('user_id'); // Dapatkan ID pengguna yang login
+      final int price = int.parse(
+        _priceController.text,
+      ); // Pastikan harga adalah int
 
-      if (userId == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('ID pengguna tidak ditemukan. Mohon login ulang.'),
-                backgroundColor: Colors.red),
-          );
-          context.go('/login'); // Arahkan ke halaman login
-        }
-        debugPrint('AddBooking: User ID null. Tidak dapat melanjutkan re-booking.');
-        return;
-      }
-
-      // Gabungkan tanggal dan waktu yang dipilih menjadi satu objek DateTime
-      final DateTime finalNewBookingTime = DateTime(
-        _selectedDate!.year,
-        _selectedDate!.month,
-        _selectedDate!.day,
-        _selectedTime!.hour,
-        _selectedTime!.minute,
+      debugPrint(
+        'AddBooking: Memulai panggilan API addService dengan data valid...',
+      );
+      final AddServiceResponse response = await _service.addService(
+        name: _nameController.text,
+        description: _descriptionController.text,
+        price: price,
+        employeeName: _employeeNameController.text,
+        employeePhotoPath:
+            _employeePhotoFile!.path, // Ini sekarang aman karena kita sudah cek
+        servicePhotoPath:
+            _servicePhotoFile!.path, // Ini sekarang aman karena kita sudah cek
       );
 
-      debugPrint('AddBooking: Mencoba membuat booking baru untuk layanan ID: ${widget.booking.service.id} untuk User ID: $userId pada $finalNewBookingTime');
-
-      // Panggil metode createBooking dari BookingService
-      final BookingResponse response = await _bookingService.createBooking(
-        userId: userId,
-        serviceId: widget.booking.service.id, // Gunakan ID layanan dari booking lama
-        bookingTime: finalNewBookingTime, // Gunakan waktu booking yang baru
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message),
-            backgroundColor: Colors.green,
-          ),
+      setState(() {
+        _isLoading = false;
+        _statusMessage =
+            'Berhasil: ${response.message}! Layanan baru ID: ${response.data.id}';
+        _showSnackBar(_statusMessage!, Colors.green);
+        debugPrint(
+          'AddBooking: Layanan berhasil ditambahkan. Respons API sukses.',
         );
-        debugPrint('AddBooking: Re-booking berhasil! Respons: ${response.message}');
-        context.pop(); // Kembali ke MyBookingsScreen
-        // Atau context.go('/my_bookings'); // Kembali ke daftar booking dan refresh (jika tidak otomatis refresh)
+
+        // Opsional: Kosongkan form setelah sukses
+        _nameController.clear();
+        _descriptionController.clear();
+        _priceController.clear();
+        _employeeNameController.clear();
+        _employeePhotoFile = null;
+        _servicePhotoFile = null;
+      });
+
+      // Opsional: Navigasi kembali atau ke daftar layanan setelah sukses
+      if (mounted) {
+        // context.pop(); // Kembali ke layar sebelumnya
+        // context.go('/admin_services'); // Navigasi ke daftar layanan admin
       }
     } catch (e) {
-      debugPrint('AddBooking: Error saat membuat re-booking: $e');
-      if (mounted) {
-        String errorMessage = e.toString().replaceFirst('Exception: ', '');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Re-booking gagal: $errorMessage'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
+      debugPrint('AddBooking: KESALAHAN UMUM saat menambahkan layanan: $e');
       setState(() {
-        _isLoading = false; // Nonaktifkan status loading
+        _isLoading = false;
+        // Hanya tampilkan pesan error dari Exception
+        _statusMessage =
+            'Gagal: ${e.toString().replaceFirst('Exception: ', '')}';
+        _showSnackBar(_statusMessage!, Colors.red);
       });
-      debugPrint('AddBooking: Status loading disetel ke false.');
+    }
+  }
+
+  // Helper untuk menampilkan SnackBar
+  void _showSnackBar(String message, Color color) {
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message), backgroundColor: color));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Format tanggal/waktu yang dipilih untuk tampilan UI
-    final selectedFormattedDate = _selectedDate == null
-        ? 'Belum ada tanggal dipilih'
-        : DateFormat('dd MMMM yyyy').format(_selectedDate!.toLocal());
-    final selectedFormattedTime = _selectedTime == null
-        ? 'Belum ada waktu dipilih'
-        : _selectedTime!.format(context);
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Booking'),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        title: const Text('Tambah Layanan Baru'),
+        backgroundColor: Colors.blueAccent,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Detail Layanan yang akan di-re-book
-            const Text(
-              'Re-booking Service:',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Nama Layanan: ${widget.booking.service.name}',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Deskripsi: ${widget.booking.service.description}',
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Harga: Rp${widget.booking.service.price}',
-                      style: const TextStyle(fontSize: 14, color: Colors.green),
-                    ),
-                  ],
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nama Layanan',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.cut),
                 ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Nama layanan tidak boleh kosong';
+                  }
+                  return null;
+                },
               ),
-            ),
-            const SizedBox(height: 24),
-
-            // Bagian Pemilihan Tanggal Booking Baru
-            const Text(
-              'Pilih Tanggal Baru:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.calendar_today),
-              title: Text(
-                'Tanggal: $selectedFormattedDate',
-                style: const TextStyle(fontSize: 16),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Deskripsi Layanan',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.description),
+                ),
+                maxLines: 3,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Deskripsi tidak boleh kosong';
+                  }
+                  return null;
+                },
               ),
-              trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () => _selectDate(context),
-            ),
-            const SizedBox(height: 16),
-
-            // Bagian Pemilihan Waktu Booking Baru
-            const Text(
-              'Pilih Waktu Baru:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.access_time),
-              title: Text(
-                'Waktu: $selectedFormattedTime',
-                style: const TextStyle(fontSize: 16),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _priceController,
+                decoration: const InputDecoration(
+                  labelText: 'Harga',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.attach_money),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Harga tidak boleh kosong';
+                  }
+                  if (int.tryParse(value) == null) {
+                    return 'Harga harus berupa angka';
+                  }
+                  return null;
+                },
               ),
-              trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () => _selectTime(context),
-            ),
-            const SizedBox(height: 32),
-
-            // Tombol Konfirmasi Re-booking
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _createRebooking, // Panggil fungsi re-booking
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _employeeNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nama Karyawan',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.person),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Nama karyawan tidak boleh kosong';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+              // Tombol untuk pilih foto karyawan
+              ElevatedButton.icon(
+                onPressed:
+                    () =>
+                        _pickImage(ImageSource.gallery, isEmployeePhoto: true),
+                icon: const Icon(Icons.image),
+                label: const Text('Pilih Foto Karyawan (Galeri)'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'Konfirmasi Re-book',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              if (_employeePhotoFile != null)
+                Text(
+                  'Foto Karyawan: ${_employeePhotoFile!.path.split('/').last}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                )
+              else
+                const Text(
+                  'Belum ada foto karyawan yang dipilih.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Colors.red),
+                ),
+              const SizedBox(height: 16),
+              // Tombol untuk pilih foto layanan
+              ElevatedButton.icon(
+                onPressed:
+                    () =>
+                        _pickImage(ImageSource.gallery, isEmployeePhoto: false),
+                icon: const Icon(Icons.photo_library),
+                label: const Text('Pilih Foto Layanan (Galeri)'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (_servicePhotoFile != null)
+                Text(
+                  'Foto Layanan: ${_servicePhotoFile!.path.split('/').last}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                )
+              else
+                const Text(
+                  'Belum ada foto layanan yang dipilih.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Colors.red),
+                ),
+
+              const SizedBox(height: 32),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton(
+                    onPressed: _addService,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent, // Warna tombol utama
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 5,
+                    ),
+                    child: const Text(
+                      'Tambah Layanan',
+                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    ),
+                  ),
+              const SizedBox(height: 16),
+              if (_statusMessage != null)
+                Text(
+                  _statusMessage!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color:
+                        _statusMessage!.startsWith('Berhasil')
+                            ? Colors.green
+                            : Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

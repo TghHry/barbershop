@@ -19,16 +19,21 @@ class _ServicesListScreenState extends State<ServicesListScreen> {
   @override
   void initState() {
     super.initState();
-    _servicesFuture = _serviceService
-        .getServices(); // Initiate fetching services
+    _servicesFuture =
+        _serviceService.getServices(); // Initiate fetching services
     debugPrint('ServicesListScreen: Initiating service fetch in initState...');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Our Services'),
+        title: const Text(
+          'Our Services',
+          // style: TextStyle(color: Colors.black),
+        ),
+        centerTitle: true,
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
       ),
@@ -66,8 +71,8 @@ class _ServicesListScreenState extends State<ServicesListScreen> {
                     ElevatedButton(
                       onPressed: () {
                         setState(() {
-                          _servicesFuture = _serviceService
-                              .getServices(); // Retry fetching
+                          _servicesFuture =
+                              _serviceService.getServices(); // Retry fetching
                           debugPrint(
                             'ServicesListScreen: Retrying service fetch on button tap...',
                           );
@@ -174,7 +179,6 @@ class _ServicesListScreenState extends State<ServicesListScreen> {
                                 service.description, // Display description
                                 style: const TextStyle(fontSize: 14),
                               ),
-
                               // ... (inside _ServicesListScreenState's build method, within ListView.builder's itemBuilder)
                               Align(
                                 alignment: Alignment.bottomRight,
@@ -205,7 +209,6 @@ class _ServicesListScreenState extends State<ServicesListScreen> {
                                   child: const Text('Book This Service'),
                                 ),
                               ),
-
                               // ...
                             ],
                           ),

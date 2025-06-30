@@ -1,231 +1,126 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart'; // For debugPrint
-import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For securely getting the token
-import 'dart:io'; // For SocketException
-import 'dart:async'; // For TimeoutException
+import 'package:flutter/foundation.dart'; // Untuk debugPrint
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // Import FlutterSecureStorage
+import 'dart:io'; // For SocketException (opsional, jika Anda ingin menangani secara eksplisit)
+import 'dart:async'; // For TimeoutException (opsional, jika Anda ingin menangani secara eksplisit)
 
-// Import your BookingResponse model (for create)
-import 'package:barbershop2/presentations/admin/barbershop/list_service/booking/models/booking_model.dart';
-// Import your UpdateBookingResponse model (for update)
+// Pastikan Anda mengimpor model-model ini dari lokasi yang benar di proyek Anda.
+// Ini adalah file yang berisi kelas UpdatedBookingData dan UpdateBookingResponse
+// yang telah diperbaiki (seperti yang Anda tunjukkan di kueri).
 import 'package:barbershop2/presentations/admin/barbershop/history/update/models/update_models.dart';
 
-// Define your base URL
-const String baseUrl =
-    'https://appsalon.mobileprojp.com'; // Your actual base URL
+class ApiService {
+  // baseUrl Anda telah diperbarui ke nilai yang Anda berikan.
+  final String baseUrl = 'https://appsalon.mobileprojp.com';
 
-class BookingService {
+  // Inisialisasi FlutterSecureStorage
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
-  // Method to create a new booking (already exists)
-  Future<BookingResponse> createBooking({
-    required int userId,
-    required int serviceId,
-    required DateTime bookingTime,
-  }) async {
-    final url = Uri.parse('$baseUrl/api/bookings');
-    debugPrint('BookingService: Attempting to create booking...');
-    // ... (rest of your createBooking implementation) ...
-    try {
-      final String? token = await _secureStorage.read(key: 'auth_token');
-      if (token == null) {
-        debugPrint(
-          'BookingService: Authentication token not found. Cannot create booking.',
-        );
-        throw Exception('Authentication token not found. Please log in.');
-      }
-
-      debugPrint(
-        'BookingService: Found token. Making POST request with Authorization header.',
-      );
-
-      final requestBody = json.encode({
-        'user_id': userId,
-        'service_id': serviceId,
-        'booking_time': bookingTime.toIso8601String(),
-      });
-      debugPrint('BookingService: Create Booking Request Body: $requestBody');
-
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: requestBody,
-      );
-
-      debugPrint(
-        'BookingService: Create Booking Response Status Code: ${response.statusCode}',
-      );
-      debugPrint(
-        'BookingService: Create Booking Response Body: ${response.body}',
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        debugPrint(
-          'BookingService: Booking created successfully! Parsing response...',
-        );
-        final BookingResponse bookingResponse = BookingResponse.fromJson(
-          responseData,
-        );
-        return bookingResponse;
-      } else if (response.statusCode == 401) {
-        debugPrint(
-          'BookingService: Unauthorized access (401) for create booking. Token might be expired or invalid.',
-        );
-        throw Exception(
-          'Unauthorized. Your session may have expired. Please log in again.',
-        );
-      } else {
-        final Map<String, dynamic> errorData = json.decode(response.body);
-        String errorMessage =
-            errorData['message'] ??
-            'Failed to create booking. Please try again.';
-        if (errorData.containsKey('errors') && errorData['errors'] is Map) {
-          errorData['errors'].forEach((key, value) {
-            errorMessage += '\n${value[0]}';
-          });
-        }
-        debugPrint('BookingService: Create Booking API Error: $errorMessage');
-        throw Exception(errorMessage);
-      }
-    } on SocketException catch (e) {
-      debugPrint(
-        'BookingService: Network error (SocketException) during create booking: ${e.message}',
-      );
-      throw Exception(
-        'Tidak ada koneksi internet. Mohon periksa koneksi Anda.',
-      );
-    } on TimeoutException catch (e) {
-      debugPrint(
-        'BookingService: Request timed out (TimeoutException) during create booking: $e',
-      );
-      throw Exception('Permintaan ke server habis waktu. Coba lagi.');
-    } catch (e) {
-      debugPrint(
-        'BookingService: An unexpected error occurred during create booking: $e',
-      );
-      throw Exception('Terjadi kesalahan tidak terduga: $e');
-    }
-  }
-
-  // NEW: Method to update an existing booking
-  Future<UpdateBookingResponse> updateBooking({
+  /// Memperbarui status pemesanan.
+  ///
+  /// Menerima [bookingId] (ID pemesanan yang akan diperbarui)
+  /// dan [status] baru (misalnya, 'confirmed', 'canceled') sebagai input.
+  /// Mengembalikan [Future] yang akan menyelesaikan ke objek [UpdateBookingResponse] saat berhasil.
+  /// Melempar [Exception] jika panggilan API gagal atau respons tidak valid.
+  Future<UpdateBookingResponse> updateBookingStatus({
     required int bookingId,
-    String? status, // Optional: if you want to update status
-    DateTime? bookingTime, // Optional: if you want to update booking time
-    // Add other fields you might want to update
+    required String status,
   }) async {
-    final url = Uri.parse('$baseUrl/api/bookings/$bookingId');
-    debugPrint('BookingService: Attempting to update booking ID: $bookingId');
-    debugPrint('BookingService: Update URL: $url');
+    final String url = '$baseUrl/api/bookings/$bookingId';
+    debugPrint(
+      'ApiService: Mencoba memperbarui status pemesanan untuk ID $bookingId ke "$status"',
+    );
+    debugPrint('ApiService: URL Panggilan: $url');
 
     try {
-      final String? token = await _secureStorage.read(key: 'auth_token');
-      if (token == null) {
-        debugPrint(
-          'BookingService: Authentication token not found. Cannot update booking.',
-        );
-        throw Exception('Authentication token not found. Please log in.');
-      }
-
+      // 1. Ambil token otentikasi dari penyimpanan aman (FlutterSecureStorage)
+      // Menggunakan kunci 'auth_token' agar konsisten dengan BookingHistoryService dan LoginScreen.
+      final String? authToken = await _secureStorage.read(key: 'auth_token');
       debugPrint(
-        'BookingService: Found token. Making PATCH request with Authorization header.',
+        'ApiService: Token yang dibaca dari secure storage: ${authToken != null && authToken.isNotEmpty ? 'Ada dan Tidak Kosong' : 'Tidak Ada atau Kosong'}',
       );
 
-      // Build the request body with only the fields that are provided
-      final Map<String, dynamic> requestBodyMap = {};
-      if (status != null) {
-        requestBodyMap['status'] = status;
-      }
-      if (bookingTime != null) {
-        requestBodyMap['booking_time'] = bookingTime.toIso8601String();
-      }
-      // Add other fields here as needed:
-      // if (newServiceId != null) {
-      //   requestBodyMap['service_id'] = newServiceId;
-      // }
+      // 2. Buat map headers, termasuk Authorization jika token tersedia
+      Map<String, String> headers = {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+      };
 
-      final requestBody = json.encode(requestBodyMap);
-      debugPrint('BookingService: Update Booking Request Body: $requestBody');
-
-      final response = await http.put(
-        // Using PATCH for partial updates
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: requestBody,
-      );
-
-      debugPrint(
-        'BookingService: Update Booking Response Status Code: ${response.statusCode}',
-      );
-      debugPrint(
-        'BookingService: Update Booking Response Body: ${response.body}',
-      );
-
-      if (response.statusCode == 200) {
-        // Successful update
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        debugPrint(
-          'BookingService: Booking updated successfully! Parsing response...',
-        );
-        final UpdateBookingResponse updateResponse =
-            UpdateBookingResponse.fromJson(responseData);
-        debugPrint(
-          'BookingService: Parsed Updated Booking ID: ${updateResponse.data.id}, Status: ${updateResponse.data.status}',
-        );
-        return updateResponse;
-      } else if (response.statusCode == 401) {
-        debugPrint(
-          'BookingService: Unauthorized access (401) for update booking. Token might be expired or invalid.',
-        );
-        throw Exception(
-          'Unauthorized. Your session may have expired. Please log in again.',
-        );
-      } else if (response.statusCode == 404) {
-        debugPrint(
-          'BookingService: Booking not found (404) for ID: $bookingId.',
-        );
-        throw Exception('Booking with ID $bookingId not found.');
+      if (authToken != null && authToken.isNotEmpty) {
+        // Menambahkan token ke header 'Authorization' dengan skema 'Bearer'
+        headers['Authorization'] = 'Bearer $authToken';
+        debugPrint('ApiService: Header Authorization disiapkan.');
       } else {
-        // Handle other API errors
-        final Map<String, dynamic> errorData = json.decode(response.body);
+        debugPrint(
+          'ApiService: Peringatan: Tidak ada token otentikasi ditemukan atau token kosong. Melempar Exception.',
+        );
+        throw Exception('Autentikasi diperlukan. Harap login kembali.');
+      }
+
+      // Melakukan permintaan PUT ke API.
+      final response = await http.put(
+        Uri.parse(url),
+        headers: headers,
+        body: jsonEncode(<String, String>{'status': status}),
+      );
+
+      debugPrint(
+        'ApiService: Menerima respons dengan kode status: ${response.statusCode}',
+      );
+      debugPrint('ApiService: Body respons: ${response.body}');
+
+      // Memeriksa apakah permintaan berhasil (kode status HTTP 2xx).
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        // Mendekode string respons JSON menjadi Map Dart.
+        final Map<String, dynamic> responseJson = jsonDecode(response.body);
+        debugPrint('ApiService: Mendekode respons JSON.');
+        // --- Menggunakan UpdatedBookingResponse.fromJson() yang sudah diperbaiki ---
+        return UpdateBookingResponse.fromJson(responseJson);
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        debugPrint(
+          'ApiService: Autentikasi gagal atau tidak diizinkan. Kode status: ${response.statusCode}',
+        );
+        await _secureStorage.delete(
+          key: 'auth_token',
+        ); // Hapus token kadaluarsa/tidak valid
+        throw Exception(
+          'Sesi Anda telah berakhir atau tidak memiliki izin. Harap login kembali.',
+        );
+      } else {
         String errorMessage =
-            errorData['message'] ??
-            'Failed to update booking. Please try again.';
-        if (errorData.containsKey('errors') && errorData['errors'] is Map) {
-          errorData['errors'].forEach((key, value) {
-            errorMessage +=
-                '\n${value[0]}'; // Assuming errors are arrays of strings
-          });
+            'Gagal memperbarui pemesanan. Status: ${response.statusCode}.';
+        try {
+          final Map<String, dynamic> errorJson = jsonDecode(response.body);
+          if (errorJson.containsKey('message')) {
+            errorMessage = errorJson['message'];
+          } else if (errorJson.containsKey('error')) {
+            errorMessage = errorJson['error'];
+          }
+        } catch (e) {
+          debugPrint(
+            'ApiService: Gagal mendekode body kesalahan sebagai JSON: $e',
+          );
+          errorMessage =
+              'Gagal memperbarui pemesanan. Respons server tidak dapat diuraikan: ${response.body}';
         }
-        debugPrint('BookingService: Update Booking API Error: $errorMessage');
+
+        debugPrint('ApiService: API mengembalikan kesalahan: $errorMessage');
         throw Exception(errorMessage);
       }
     } on SocketException catch (e) {
-      debugPrint(
-        'BookingService: Network error (SocketException) during update booking: ${e.message}',
-      );
+      // Menangani khusus masalah koneksi
+      debugPrint('ApiService: Network error (SocketException): ${e.message}');
       throw Exception(
         'Tidak ada koneksi internet. Mohon periksa koneksi Anda.',
       );
     } on TimeoutException catch (e) {
-      debugPrint(
-        'BookingService: Request timed out (TimeoutException) during update booking: $e',
-      );
+      // Menangani khusus timeout
+      debugPrint('ApiService: Request timed out (TimeoutException): $e');
       throw Exception('Permintaan ke server habis waktu. Coba lagi.');
     } catch (e) {
-      debugPrint(
-        'BookingService: An unexpected error occurred during update booking: $e',
-      );
-      throw Exception('Terjadi kesalahan tidak terduga: $e');
+      debugPrint('ApiService: Terjadi pengecualian selama panggilan API: $e');
+      rethrow;
     }
   }
 }

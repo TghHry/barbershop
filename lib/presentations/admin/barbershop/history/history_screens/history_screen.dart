@@ -25,8 +25,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   @override
   void initState() {
     super.initState();
-    _bookingHistoryFuture = _bookingHistoryService
-        .getBookingHistory(); // Initiate fetching booking history
+    _bookingHistoryFuture =
+        _bookingHistoryService
+            .getBookingHistory(); // Initiate fetching booking history
     debugPrint(
       'MyBookingsScreen: Initiating booking history fetch in initState...',
     );
@@ -36,8 +37,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   Future<void> _refreshBookingHistory() async {
     debugPrint('MyBookingsScreen: Pull-to-refresh triggered.');
     setState(() {
-      _bookingHistoryFuture = _bookingHistoryService
-          .getBookingHistory(); // Re-initiate fetching
+      _bookingHistoryFuture =
+          _bookingHistoryService.getBookingHistory(); // Re-initiate fetching
     });
     // Await the future so RefreshIndicator knows when to stop
     await _bookingHistoryFuture;
@@ -64,26 +65,27 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             ElevatedButton(
               child:
                   _isDeletingBooking // Show loading if deleting
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text(
-                      'Delete',
-                      style: TextStyle(color: Colors.white),
-                    ), // White text for dark button
+                      ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                      : const Text(
+                        'Delete',
+                        style: TextStyle(color: Colors.white),
+                      ), // White text for dark button
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red, // Red for delete action
               ),
-              onPressed: _isDeletingBooking
-                  ? null
-                  : () {
-                      Navigator.of(dialogContext).pop(true); // User confirmed
-                    },
+              onPressed:
+                  _isDeletingBooking
+                      ? null
+                      : () {
+                        Navigator.of(dialogContext).pop(true); // User confirmed
+                      },
             ),
           ],
         );
@@ -147,8 +149,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text('My Bookings'),
+        centerTitle: true,
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
       ),

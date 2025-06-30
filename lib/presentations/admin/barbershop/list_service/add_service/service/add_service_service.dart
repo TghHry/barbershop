@@ -1,16 +1,16 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart'; // Untuk debugPrint
-import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // Untuk mendapatkan token secara aman
-import 'dart:io';   // Untuk kelas File dan SocketException
-import 'dart:async'; // Untuk TimeoutException
+import 'package:flutter/foundation.dart'; // For debugPrint
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For securely getting the token
+import 'dart:io';    // For File class and SocketException
+import 'dart:async'; // For TimeoutException
 
 // Impor model AddServiceResponse Anda
 // Sesuaikan path sesuai struktur proyek Anda
 import 'package:barbershop2/presentations/admin/barbershop/list_service/add_service/models/add_service_models.dart';
 
 // Definisikan BASE URL Anda (pastikan konsisten di semua layanan Anda)
-const String baseUrl = 'https://appsalon.mobileprojp.com'; // Ganti dengan BASE URL aktual Anda
+const String baseUrl = 'https://appsalon.mobileprojp.com'; // Your actual base URL
 
 class ServiceManagementService {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
@@ -33,8 +33,8 @@ class ServiceManagementService {
 
     try {
       // Ambil token otentikasi dari penyimpanan aman
-      final String? token = await _secureStorage.read(key: 'auth_token');
-      if (token == null) {
+      final String? token = await _secureStorage.read(key: 'auth_token'); // Menggunakan kunci yang konsisten
+      if (token == null || token.isEmpty) {
         debugPrint('ServiceManagementService: Token otentikasi tidak ditemukan. Tidak dapat menambahkan layanan.');
         throw Exception('Token otentikasi tidak ditemukan. Silakan login.');
       }
@@ -47,6 +47,8 @@ class ServiceManagementService {
       // Tambahkan header otorisasi
       request.headers['Authorization'] = 'Bearer $token';
       request.headers['Accept'] = 'application/json'; // Meminta respons JSON
+      // MultipartRequest secara otomatis mengatur Content-Type: multipart/form-data
+      // Tidak perlu menyetel 'Content-Type': 'application/json' di sini untuk request.headers
 
       // Tambahkan field teks
       request.fields['name'] = name;
@@ -54,7 +56,14 @@ class ServiceManagementService {
       request.fields['price'] = price.toString(); // Konversi harga int ke string untuk field form
       request.fields['employee_name'] = employeeName;
 
-      // Tambahkan file gambar
+      // --- SOLUSI PALING AKHIR (WORKAROUND): Coba kirimkan nama file yang kosong sebagai string jika file tidak ada ---
+      // Ini hanya jika backend benar-benar memerlukan field string ini di bagian 'fields'
+      // bahkan saat file diunggah di bagian 'files'. Ini adalah praktik yang tidak biasa.
+      request.fields['employee_photo'] = ''; // Default ke string kosong
+      request.fields['service_photo'] = '';  // Default ke string kosong
+
+
+      // Tambahkan file gambar ke request.files
       // Foto Karyawan
       if (employeePhotoPath.isNotEmpty) {
         final employeePhotoFile = File(employeePhotoPath);
@@ -67,7 +76,12 @@ class ServiceManagementService {
           employeePhotoPath,
           filename: employeePhotoFile.path.split('/').last, // Ambil hanya nama file
         ));
-        debugPrint('ServiceManagementService: Menambahkan file foto karyawan.');
+        debugPrint('ServiceManagementService: Menambahkan file foto karyawan ke bagian files.');
+        // Jika backend membutuhkan nama file di field teks (tidak disarankan),
+        // Anda bisa menyetelnya di sini:
+        // request.fields['employee_photo'] = employeePhotoFile.path.split('/').last;
+      } else {
+        debugPrint('ServiceManagementService: Path foto karyawan kosong. Tidak ada file yang ditambahkan.');
       }
 
       // Foto Layanan
@@ -82,7 +96,12 @@ class ServiceManagementService {
           servicePhotoPath,
           filename: servicePhotoFile.path.split('/').last,
         ));
-        debugPrint('ServiceManagementService: Menambahkan file foto layanan.');
+        debugPrint('ServiceManagementService: Menambahkan file foto layanan ke bagian files.');
+        // Jika backend membutuhkan nama file di field teks (tidak disarankan),
+        // Anda bisa menyetelnya di sini:
+        // request.fields['service_photo'] = servicePhotoFile.path.split('/').last;
+      } else {
+        debugPrint('ServiceManagementService: Path foto layanan kosong. Tidak ada file yang ditambahkan.');
       }
 
       debugPrint('ServiceManagementService: Mengirim permintaan multipart...');
@@ -99,17 +118,32 @@ class ServiceManagementService {
         final AddServiceResponse addServiceResponse = AddServiceResponse.fromJson(responseData);
         debugPrint('ServiceManagementService: ID Layanan Baru yang Diparsing: ${addServiceResponse.data.id}');
         return addServiceResponse;
-      } else if (response.statusCode == 401) {
-        debugPrint('ServiceManagementService: Akses tidak sah (401). Token mungkin kedaluwarsa atau tidak valid.');
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        debugPrint('ServiceManagementService: Akses tidak sah (${response.statusCode}). Token mungkin kedaluwarsa atau tidak valid.');
+        await _secureStorage.delete(key: 'auth_token'); // Hapus token kadaluarsa/tidak valid
         throw Exception('Tidak sah. Sesi Anda mungkin telah berakhir. Silakan login lagi.');
-      } else {
+      } else if (response.statusCode == 422) { // Kode status umum untuk error validasi
+        final Map<String, dynamic> errorData = json.decode(response.body);
+        String errorMessage = errorData['message'] ?? 'Gagal menambahkan layanan karena validasi server.';
+        if (errorData.containsKey('errors') && errorData['errors'] is Map) {
+          errorData['errors'].forEach((key, value) {
+            if (value is List && value.isNotEmpty) {
+              errorMessage += '\n- ${value[0]}'; // Asumsi error adalah array string
+            } else if (value is String) {
+              errorMessage += '\n- $value';
+            }
+          });
+        }
+        debugPrint('ServiceManagementService: Error Validasi API (422): $errorMessage');
+        throw Exception(errorMessage);
+      }
+      else {
         // Tangani error API lainnya
         final Map<String, dynamic> errorData = json.decode(response.body);
         String errorMessage = errorData['message'] ?? 'Gagal menambahkan layanan. Silakan coba lagi.';
-        if (errorData.containsKey('errors') && errorData['errors'] is Map) {
-          errorData['errors'].forEach((key, value) {
-            errorMessage += '\n${value[0]}'; // Asumsi error adalah array string
-          });
+        // Tangani error jika ada di field 'errors' umum
+        if (errorData.containsKey('errors') && errorData['errors'] is String) {
+          errorMessage += '\n${errorData['errors']}';
         }
         debugPrint('ServiceManagementService: Error API: $errorMessage');
         throw Exception(errorMessage);
