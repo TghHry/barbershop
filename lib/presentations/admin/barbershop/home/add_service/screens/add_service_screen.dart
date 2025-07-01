@@ -22,10 +22,11 @@ class _AddBookingState extends State<AddBooking> {
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _employeeNameController = TextEditingController();
 
-  File? _employeePhotoFile; // File foto karyawan yang dipilih
+  // Hanya satu file foto yang diperlukan sekarang: servicePhotoFile
   File? _servicePhotoFile; // File foto layanan yang dipilih
 
   bool _isLoading = false;
+
   String? _statusMessage; // Untuk menampilkan pesan sukses/error
   final ServiceManagementService _service =
       ServiceManagementService(); // Instansiasi service Anda
@@ -39,27 +40,20 @@ class _AddBookingState extends State<AddBooking> {
     super.dispose();
   }
 
-  // Fungsi untuk memilih gambar dari galeri
-  Future<void> _pickImage(
-    ImageSource source, {
-    required bool isEmployeePhoto,
-  }) async {
+  // Fungsi untuk memilih gambar dari galeri (sekarang hanya untuk foto layanan)
+  Future<void> _pickImage(ImageSource source) async {
+    // Parameter isEmployeePhoto dihapus
     final ImagePicker picker = ImagePicker();
     final XFile? pickedFile = await picker.pickImage(source: source);
 
     if (pickedFile != null) {
       setState(() {
-        if (isEmployeePhoto) {
-          _employeePhotoFile = File(pickedFile.path);
-          debugPrint(
-            'AddBooking: FOTO KARYAWAN DIPILIH. Path: ${_employeePhotoFile!.path}',
-          );
-        } else {
-          _servicePhotoFile = File(pickedFile.path);
-          debugPrint(
-            'AddBooking: FOTO LAYANAN DIPILIH. Path: ${_servicePhotoFile!.path}',
-          );
-        }
+        _servicePhotoFile = File(
+          pickedFile.path,
+        ); // Selalu set ke servicePhotoFile
+        debugPrint(
+          'AddBooking: FOTO LAYANAN DIPILIH. Path: ${_servicePhotoFile!.path}',
+        );
       });
     } else {
       debugPrint('AddBooking: Pemilihan gambar dibatalkan oleh pengguna.');
@@ -75,16 +69,7 @@ class _AddBookingState extends State<AddBooking> {
 
     // --- PENTING: Debugging di sini ---
     debugPrint('AddBooking: Memeriksa keberadaan file foto sebelum dikirim...');
-    if (_employeePhotoFile == null || !await _employeePhotoFile!.exists()) {
-      _showSnackBar(
-        'Pilih foto karyawan terlebih dahulu atau file tidak ada.',
-        Colors.red,
-      );
-      debugPrint(
-        'AddBooking: ERROR: Foto karyawan NULL atau TIDAK ADA di path: ${_employeePhotoFile?.path}',
-      );
-      return;
-    }
+    // Hanya validasi servicePhotoFile
     if (_servicePhotoFile == null || !await _servicePhotoFile!.exists()) {
       _showSnackBar(
         'Pilih foto layanan terlebih dahulu atau file tidak ada.',
@@ -95,9 +80,6 @@ class _AddBookingState extends State<AddBooking> {
       );
       return;
     }
-    debugPrint(
-      'AddBooking: FOTO KARYAWAN DITEMUKAN di path: ${_employeePhotoFile!.path}',
-    );
     debugPrint(
       'AddBooking: FOTO LAYANAN DITEMUKAN di path: ${_servicePhotoFile!.path}',
     );
@@ -120,10 +102,8 @@ class _AddBookingState extends State<AddBooking> {
         description: _descriptionController.text,
         price: price,
         employeeName: _employeeNameController.text,
-        employeePhotoPath:
-            _employeePhotoFile!.path, // Ini sekarang aman karena kita sudah cek
-        servicePhotoPath:
-            _servicePhotoFile!.path, // Ini sekarang aman karena kita sudah cek
+        employeePhotoPath: '', // Kirim string kosong untuk foto karyawan
+        servicePhotoPath: _servicePhotoFile!.path, // Kirim path foto layanan
       );
 
       setState(() {
@@ -140,8 +120,7 @@ class _AddBookingState extends State<AddBooking> {
         _descriptionController.clear();
         _priceController.clear();
         _employeeNameController.clear();
-        _employeePhotoFile = null;
-        _servicePhotoFile = null;
+        _servicePhotoFile = null; // Kosongkan file foto layanan
       });
 
       // Opsional: Navigasi kembali atau ke daftar layanan setelah sukses
@@ -173,183 +152,157 @@ class _AddBookingState extends State<AddBooking> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      // backgroundColor: Colors.black, // Jika Anda ingin gradien, ini harus transparan dan menggunakan Stack
       appBar: AppBar(
-        title: const Text(
-          'Tambah Layanan Baru',
-          // style: TextStyle(color: Colors.white),
-        ),
-        // backgroundColor: Colors.black,
+        title: const Text('Tambah Layanan Baru'),
+        backgroundColor: Colors.black, // Latar belakang AppBar menjadi hitam
+        foregroundColor: Colors.white,
+        centerTitle: true, // Warna teks judul dan ikon navigasi menjadi putih
+        // Jika Anda ingin latar belakang gradien, atur ini ke Colors.transparent dan elevation 0
+        // Serta tambahkan extendBodyBehindAppBar: true di Scaffold
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(15.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(height: 50),
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nama Layanan',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.cut),
+          child: Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nama Layanan',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.cut),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Nama layanan tidak boleh kosong';
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Nama layanan tidak boleh kosong';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _descriptionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Deskripsi Layanan',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.description),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _descriptionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Deskripsi Layanan',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.description),
+                      ),
+                      maxLines: 3,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Deskripsi tidak boleh kosong';
+                        }
+                        return null;
+                      },
                     ),
-                    maxLines: 3,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Deskripsi tidak boleh kosong';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _priceController,
-                    decoration: const InputDecoration(
-                      labelText: 'Harga',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.money),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _priceController,
+                      decoration: const InputDecoration(
+                        labelText: 'Harga',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.money),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Harga tidak boleh kosong';
+                        }
+                        if (int.tryParse(value) == null) {
+                          return 'Harga harus berupa angka';
+                        }
+                        return null;
+                      },
                     ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Harga tidak boleh kosong';
-                      }
-                      if (int.tryParse(value) == null) {
-                        return 'Harga harus berupa angka';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _employeeNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nama Karyawan',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _employeeNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nama Karyawan',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Nama karyawan tidak boleh kosong';
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Nama karyawan tidak boleh kosong';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  // Tombol untuk pilih foto karyawan
-                  ElevatedButton.icon(
-                    onPressed:
-                        () => _pickImage(
-                          ImageSource.gallery,
-                          isEmployeePhoto: true,
+                    const SizedBox(height: 24),
+                    // --- Hanya tombol untuk pilih foto layanan yang tersisa ---
+                    ElevatedButton.icon(
+                      onPressed:
+                          () => _pickImage(
+                            ImageSource.gallery,
+                          ), // isEmployeePhoto dihapus
+                      icon: const Icon(Icons.photo_library),
+                      label: const Text('Pilih Foto Layanan (Galeri)'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                    icon: const Icon(Icons.image),
-                    label: const Text('Pilih Foto Karyawan (Galeri)'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (_employeePhotoFile != null)
-                    Text(
-                      'Foto Karyawan: ${_employeePhotoFile!.path.split('/').last}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    )
-                  else
-                    const Text(
-                      'Belum ada foto karyawan yang dipilih.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: Colors.red),
-                    ),
-                  const SizedBox(height: 16),
-                  // Tombol untuk pilih foto layanan
-                  ElevatedButton.icon(
-                    onPressed:
-                        () => _pickImage(
-                          ImageSource.gallery,
-                          isEmployeePhoto: false,
+                    const SizedBox(height: 8),
+                    if (_servicePhotoFile != null)
+                      Text(
+                        'Foto Layanan: ${_servicePhotoFile!.path.split('/').last}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
                         ),
-                    icon: const Icon(Icons.photo_library),
-                    label: const Text('Pilih Foto Layanan (Galeri)'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                      )
+                    else
+                      const Text(
+                        'Belum ada foto layanan yang dipilih.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12, color: Colors.red),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (_servicePhotoFile != null)
-                    Text(
-                      'Foto Layanan: ${_servicePhotoFile!.path.split('/').last}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    )
-                  else
-                    const Text(
-                      'Belum ada foto layanan yang dipilih.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: Colors.red),
-                    ),
 
-                  const SizedBox(height: 32),
-                  _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : ElevatedButton(
-                        onPressed: _addService,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Colors.blueAccent, // Warna tombol utama
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 32),
+                    _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : ElevatedButton(
+                          onPressed: _addService,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black, // Warna tombol utama
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 5,
                           ),
-                          elevation: 5,
+                          child: const Text(
+                            'Tambah Layanan',
+                            style: TextStyle(fontSize: 18, color: Colors.white),
+                          ),
                         ),
-                        child: const Text(
-                          'Tambah Layanan',
-                          style: TextStyle(fontSize: 18, color: Colors.white),
+                    const SizedBox(height: 16),
+                    if (_statusMessage != null)
+                      Text(
+                        _statusMessage!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color:
+                              _statusMessage!.startsWith('Berhasil')
+                                  ? Colors.green
+                                  : Colors.red,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                  const SizedBox(height: 16),
-                  if (_statusMessage != null)
-                    Text(
-                      _statusMessage!,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color:
-                            _statusMessage!.startsWith('Berhasil')
-                                ? Colors.green
-                                : Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

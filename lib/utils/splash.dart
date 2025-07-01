@@ -26,7 +26,7 @@ class _SplashScreenState extends State<SplashScreen> {
           children: <Widget>[
             // Grafik Barbershop (Gunting dan Ombak/Sisir)
             const Icon(
-              Icons.content_cut, // Ikon gunting
+              Icons.switch_access_shortcut_sharp, // Ikon gunting
               size: 80.0,
               color: Colors.black87,
             ),
@@ -39,7 +39,7 @@ class _SplashScreenState extends State<SplashScreen> {
             const SizedBox(height: 32.0), // Spasi
             // Nama Aplikasi
             const Text(
-              'BARBERSHOP',
+              'Scukur.in',
               style: TextStyle(
                 fontSize: 28.0,
                 fontWeight: FontWeight.bold,

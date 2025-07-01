@@ -4,9 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart'; // To get user ID
 import 'package:flutter/foundation.dart'; // For debugPrint
 
 // Import your service and models
-import 'package:barbershop2/presentations/admin/barbershop/list_service/list_service_models/list_service_model.dart'; // ServiceItem model
-import 'package:barbershop2/presentations/admin/barbershop/list_service/booking/service/booking_service.dart'; // BookingService
-import 'package:barbershop2/presentations/admin/barbershop/list_service/booking/models/booking_model.dart'; // BookingResponse model
+import 'package:barbershop2/presentations/admin/barbershop/home/list_service/list_service_models/list_service_model.dart'; // ServiceItem model
+import 'package:barbershop2/presentations/admin/barbershop/home/list_service/booking/service/booking_service.dart'; // BookingService
+import 'package:barbershop2/presentations/admin/barbershop/home/list_service/booking/models/booking_model.dart'; // BookingResponse model
 
 class BookingDetailScreen extends StatefulWidget {
   final ServiceItem service; // This screen receives the selected service
@@ -82,19 +82,24 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getInt('user_id'); // Get user ID from SharedPreferences
+      final userId = prefs.getInt(
+        'user_id',
+      ); // Get user ID from SharedPreferences
 
       if (userId == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('User ID not found. Please log in again.'),
-                backgroundColor: Colors.red),
+              content: Text('User ID not found. Please log in again.'),
+              backgroundColor: Colors.red,
+            ),
           );
           // Optionally navigate to login
           context.go('/login');
         }
-        debugPrint('BookingDetailScreen: User ID is null. Cannot proceed with booking.');
+        debugPrint(
+          'BookingDetailScreen: User ID is null. Cannot proceed with booking.',
+        );
         return;
       }
 
@@ -107,7 +112,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         _selectedTime!.minute,
       );
 
-      debugPrint('BookingDetailScreen: Attempting to book service with ID: ${widget.service.id} for User ID: $userId at $finalBookingTime');
+      debugPrint(
+        'BookingDetailScreen: Attempting to book service with ID: ${widget.service.id} for User ID: $userId at $finalBookingTime',
+      );
 
       final BookingResponse response = await _bookingService.createBooking(
         userId: userId,
@@ -122,7 +129,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        debugPrint('BookingDetailScreen: Booking successful! Response: ${response.message}');
+        debugPrint(
+          'BookingDetailScreen: Booking successful! Response: ${response.message}',
+        );
         // Navigate back to the services list or home after successful booking
         context.pop(); // Go back to the previous screen (ServicesListScreen)
         // Or context.go('/home'); // Go to home screen
@@ -156,85 +165,99 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Booking: ${widget.service.name}',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Price: Rp${widget.service.price}',
-              style: const TextStyle(fontSize: 18, color: Colors.green),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              widget.service.description,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 24),
-
-            // Date Selection
-            const Text(
-              'Select Date:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.calendar_today),
-              title: Text(
-                _selectedDate == null
-                    ? 'No date selected'
-                    : 'Date: ${_selectedDate!.toLocal().toString().split(' ')[0]}',
-                style: const TextStyle(fontSize: 16),
-              ),
-              trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () => _selectDate(context),
-            ),
-            const SizedBox(height: 16),
-
-            // Time Selection
-            const Text(
-              'Select Time:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.access_time),
-              title: Text(
-                _selectedTime == null
-                    ? 'No time selected'
-                    : 'Time: ${_selectedTime!.format(context)}',
-                style: const TextStyle(fontSize: 16),
-              ),
-              trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () => _selectTime(context),
-            ),
-            const SizedBox(height: 32),
-
-            // Book Button
-            SizedBox(
-              width: double.infinity, // Make button full width
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _bookService,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Booking: ${widget.service.name}',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'Confirm Booking',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                const SizedBox(height: 8),
+                Text(
+                  'Price: Rp${widget.service.price}',
+                  style: const TextStyle(fontSize: 18, color: Colors.green),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  widget.service.description,
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 24),
+
+                // Date Selection
+                const Text(
+                  'Select Date:',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                ListTile(
+                  leading: const Icon(Icons.calendar_today),
+                  title: Text(
+                    _selectedDate == null
+                        ? 'No date selected'
+                        : 'Date: ${_selectedDate!.toLocal().toString().split(' ')[0]}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios),
+                  onTap: () => _selectDate(context),
+                ),
+                const SizedBox(height: 16),
+
+                // Time Selection
+                const Text(
+                  'Select Time:',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                ListTile(
+                  leading: const Icon(Icons.access_time),
+                  title: Text(
+                    _selectedTime == null
+                        ? 'No time selected'
+                        : 'Time: ${_selectedTime!.format(context)}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios),
+                  onTap: () => _selectTime(context),
+                ),
+                const SizedBox(height: 32),
+
+                // Book Button
+                SizedBox(
+                  width: double.infinity, // Make button full width
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _bookService,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
-              ),
+                    ),
+                    child:
+                        _isLoading
+                            ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                            : const Text(
+                              'Confirm Booking',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

@@ -2,14 +2,14 @@ import 'package:barbershop2/presentations/admin/auth/login/screens/login_screen.
 import 'package:barbershop2/presentations/admin/auth/register/screens/register_screen.dart'; // Ensure correct path for RegisterScreen
 import 'package:barbershop2/presentations/admin/barbershop/home/add_service/screens/add_service_screen.dart';
 // import 'package:barbershop2/presentations/admin/barbershop/booking/screens/booking_screen.dart';
-import 'package:barbershop2/presentations/admin/barbershop/history/history_models/history_model.dart';
-import 'package:barbershop2/presentations/admin/barbershop/history/history_screens/history_screen.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/history/history_models/history_model.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/history/history_screens/history_screen.dart';
 import 'package:barbershop2/presentations/admin/barbershop/home/screens/home_screen.dart';
-import 'package:barbershop2/presentations/admin/barbershop/list_service/booking/screens/book_screen.dart';
-import 'package:barbershop2/presentations/admin/barbershop/list_service/list_service_models/list_service_model.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/list_service/booking/screens/booking_screen.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/list_service/list_service_models/list_service_model.dart';
 // import 'package:barbershop2/presentations/admin/barbershop/list_service/models/list_service_model.dart';
-import 'package:barbershop2/presentations/admin/barbershop/list_service/list_service_screens/list_screen.dart';
-import 'package:barbershop2/presentations/admin/barbershop/history/update/screen/update_screen.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/list_service/list_service_screens/list_screen.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/history/update/screen/update_screen.dart';
 import 'package:barbershop2/utils/splash.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -101,23 +101,6 @@ final GoRouter router = GoRouter(
         return UpdateBookingScreen(booking: booking);
       },
     ),
-    // GoRoute(
-    //   path:
-    //       '/rebook_service', // ROUTE BARU UNTUK MEMBUAT BOOKING BARU DARI RIWAYAT
-    //   builder: (context, state) {
-    //     final BookingHistoryItem? booking =
-    //         state.extra as BookingHistoryItem?; // Menerima BookingHistoryItem
-    //     if (booking == null) {
-    //       return Scaffold(
-    //         appBar: AppBar(title: Text('Error')),
-    //         body: Center(
-    //           child: Text('Detail booking tidak tersedia untuk re-book.'),
-    //         ),
-    //       );
-    //     }
-    //     return AddBooking(); // Membangun RebookServiceScreen
-    //   },
-    // ),
   ],
   // Optional: Add error handling for unknown routes
   errorBuilder:

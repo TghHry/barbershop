@@ -131,14 +131,14 @@ class _LoginScreenState extends State<LoginScreen> {
             backgroundColor: Colors.red,
             action:
                 errorMessage.contains('daftar akun baru') ||
-                    errorMessage.contains('Email belum terdaftar')
-                ? SnackBarAction(
-                    label: 'Daftar',
-                    onPressed: () {
-                      context.go('/register');
-                    },
-                  )
-                : null,
+                        errorMessage.contains('Email belum terdaftar')
+                    ? SnackBarAction(
+                      label: 'Daftar',
+                      onPressed: () {
+                        context.go('/register');
+                      },
+                    )
+                    : null,
           ),
         );
         debugPrint('LoginScreen: Displayed error message: "$errorMessage"');
@@ -170,13 +170,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 20),
                   const Text(
-                    'BOOKING',
+                    'Scukur.in',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
-                  const Text(
-                    'BARBERSHOP',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
+                  // const Text(
+                  //   'BARBERSHOP',
+                  //   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  // ),
                   const SizedBox(height: 10),
                   const Text(
                     'Log In',
@@ -244,12 +244,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              "Login",
-                              style: TextStyle(color: Colors.white),
-                            ),
+                      child:
+                          isLoading
+                              ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                              : const Text(
+                                "Login",
+                                style: TextStyle(color: Colors.white),
+                              ),
                     ),
                   ),
                   const SizedBox(height: 20),

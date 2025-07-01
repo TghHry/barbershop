@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart'; // For debugPrint
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For securely getting the token
 import 'dart:io';    // For File class and SocketException
 import 'dart:async'; // For TimeoutException
-import 'dart:typed_data'; // For Uint8List and Base64 conversion
 
 // Impor model AddServiceResponse Anda
 // Sesuaikan path sesuai struktur proyek Anda
@@ -57,7 +56,14 @@ class ServiceManagementService {
       request.fields['price'] = price.toString(); // Konversi harga int ke string untuk field form
       request.fields['employee_name'] = employeeName;
 
-      // --- PERUBAHAN UTAMA: Konversi gambar ke Base64 dan tambahkan ke request.fields ---
+      // --- SOLUSI PALING AKHIR (WORKAROUND): Coba kirimkan nama file yang kosong sebagai string jika file tidak ada ---
+      // Ini hanya jika backend benar-benar memerlukan field string ini di bagian 'fields'
+      // bahkan saat file diunggah di bagian 'files'. Ini adalah praktik yang tidak biasa.
+      request.fields['employee_photo'] = ''; // Default ke string kosong
+      request.fields['service_photo'] = '';  // Default ke string kosong
+
+
+      // Tambahkan file gambar ke request.files
       // Foto Karyawan
       if (employeePhotoPath.isNotEmpty) {
         final employeePhotoFile = File(employeePhotoPath);
@@ -65,13 +71,17 @@ class ServiceManagementService {
           debugPrint('ServiceManagementService: File foto karyawan tidak ada: $employeePhotoPath');
           throw Exception('File foto karyawan tidak ada di: $employeePhotoPath');
         }
-        Uint8List employeePhotoBytes = await employeePhotoFile.readAsBytes();
-        String employeePhotoBase64 = base64Encode(employeePhotoBytes);
-        request.fields['employee_photo'] = employeePhotoBase64; // Kirim Base64 sebagai string
-        debugPrint('ServiceManagementService: Foto karyawan dikonversi ke Base64 dan ditambahkan ke fields.');
+        request.files.add(await http.MultipartFile.fromPath(
+          'employee_photo', // Ini adalah nama field di API Anda (Laravel sering menggunakan snake_case)
+          employeePhotoPath,
+          filename: employeePhotoFile.path.split('/').last, // Ambil hanya nama file
+        ));
+        debugPrint('ServiceManagementService: Menambahkan file foto karyawan ke bagian files.');
+        // Jika backend membutuhkan nama file di field teks (tidak disarankan),
+        // Anda bisa menyetelnya di sini:
+        // request.fields['employee_photo'] = employeePhotoFile.path.split('/').last;
       } else {
-        request.fields['employee_photo'] = ''; // Kirim string kosong jika tidak ada foto
-        debugPrint('ServiceManagementService: Path foto karyawan kosong. Mengirim string kosong untuk field.');
+        debugPrint('ServiceManagementService: Path foto karyawan kosong. Tidak ada file yang ditambahkan.');
       }
 
       // Foto Layanan
@@ -81,18 +91,19 @@ class ServiceManagementService {
           debugPrint('ServiceManagementService: File foto layanan tidak ada: $servicePhotoPath');
           throw Exception('File foto layanan tidak ada di: $servicePhotoPath');
         }
-        Uint8List servicePhotoBytes = await servicePhotoFile.readAsBytes();
-        String servicePhotoBase64 = base64Encode(servicePhotoBytes);
-        request.fields['service_photo'] = servicePhotoBase64; // Kirim Base64 sebagai string
-        debugPrint('ServiceManagementService: Foto layanan dikonversi ke Base64 dan ditambahkan ke fields.');
+        request.files.add(await http.MultipartFile.fromPath(
+          'service_photo', // Ini adalah nama field di API Anda
+          servicePhotoPath,
+          filename: servicePhotoFile.path.split('/').last,
+        ));
+        debugPrint('ServiceManagementService: Menambahkan file foto layanan ke bagian files.');
+        // Jika backend membutuhkan nama file di field teks (tidak disarankan),
+        // Anda bisa menyetelnya di sini:
+        // request.fields['service_photo'] = servicePhotoFile.path.split('/').last;
       } else {
-        request.fields['service_photo'] = ''; // Kirim string kosong jika tidak ada foto
-        debugPrint('ServiceManagementService: Path foto layanan kosong. Mengirim string kosong untuk field.');
+        debugPrint('ServiceManagementService: Path foto layanan kosong. Tidak ada file yang ditambahkan.');
       }
-      // --- AKHIR PERUBAHAN UTAMA ---
 
-      // --- CATATAN: request.files.add() DIHAPUS karena kita mengirim Base64 di request.fields ---
-      
       debugPrint('ServiceManagementService: Mengirim permintaan multipart...');
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse); // Konversi streamed response ke http.Response

@@ -6,6 +6,7 @@ import 'package:barbershop2/presentations/admin/auth/register/services/register_
 import 'package:barbershop2/presentations/admin/auth/register/models/register_model.dart';
 import 'package:go_router/go_router.dart'; // Ensure this path is correct for your model
 
+
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -120,14 +121,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 20),
                   const Text(
-                    'BOOKING',
+                    'Scukur.in',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
-                  const Text(
-                    'BARBERSHOP',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
                   const Text(
                     'Sign Up',
                     style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
@@ -137,9 +133,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   TextFormField(
                     keyboardType: TextInputType.name,
                     controller: _usernameController,
-                    validator: (val) => val == null || val.isEmpty
-                        ? "Username wajib diisi"
-                        : null,
+                    validator:
+                        (val) =>
+                            val == null || val.isEmpty
+                                ? "Username wajib diisi"
+                                : null,
                     decoration: const InputDecoration(
                       hintText: "Enter your full name",
                       labelText: 'Full Name',
@@ -173,9 +171,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
-                    validator: (val) => val == null || val.length < 6
-                        ? "Password minimal 6 karakter"
-                        : null,
+                    validator:
+                        (val) =>
+                            val == null || val.length < 6
+                                ? "Password minimal 6 karakter"
+                                : null,
                     decoration: InputDecoration(
                       labelText: 'Password',
                       hintText: "Enter your password",
@@ -234,30 +234,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         370, // Consider using MediaQuery.of(context).size.width * 0.9 for responsiveness
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: isLoading
-                          ? null
-                          : register, // Disable button while loading
+                      onPressed:
+                          isLoading
+                              ? null
+                              : register, // Disable button while loading
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 80,
                           vertical: 14,
                         ),
-                        iconColor: Colors
-                            .black, // This property doesn't directly apply to the button background
+                        iconColor:
+                            Colors
+                                .black, // This property doesn't directly apply to the button background
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              'Register',
-                              style: TextStyle(
-                                fontSize: 16,
+                      child:
+                          isLoading
+                              ? const CircularProgressIndicator(
                                 color: Colors.white,
+                              )
+                              : const Text(
+                                'Register',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
                     ),
                   ),
                   const SizedBox(height: 20),

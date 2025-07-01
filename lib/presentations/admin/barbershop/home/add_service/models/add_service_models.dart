@@ -1,5 +1,5 @@
-
-import 'package:flutter/foundation.dart'; // Untuk debugPrint
+// import 'dart:convert';
+import 'package:flutter/foundation.dart'; // For debugPrint
 
 // Model untuk objek 'data' dalam respons penambahan layanan
 class AddServiceData {
@@ -33,10 +33,17 @@ class AddServiceData {
     debugPrint('AddServiceData.fromJson: Memulai parsing data layanan: $json');
     try {
       return AddServiceData(
-        id: json['id'] as int,
+        // --- SOLUSI: Pastikan properti int diparsing dengan aman ---
+        // Ini akan menangani kasus di mana backend mengirimkan angka sebagai string.
+        id: json['id'] is int
+            ? json['id'] as int
+            : int.parse(json['id'].toString()),
         name: json['name'] as String,
         description: json['description'] as String,
-        price: json['price'] as int, // Cast langsung ke int
+        price: json['price'] is int
+            ? json['price'] as int
+            : int.parse(json['price'].toString()),
+        // --- Akhir Solusi ---
         employeeName: json['employee_name'] as String,
         employeePhoto: json['employee_photo'] as String,
         servicePhoto: json['service_photo'] as String,

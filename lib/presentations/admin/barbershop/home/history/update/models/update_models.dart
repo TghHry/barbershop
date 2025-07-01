@@ -1,4 +1,4 @@
-import 'dart:convert';
+// import 'dart:convert';
 import 'package:flutter/foundation.dart'; // For debugPrint
 
 // Model for the 'data' object within the update booking response
@@ -25,9 +25,18 @@ class UpdatedBookingData {
     debugPrint('UpdatedBookingData.fromJson: Parsing booking data: $json');
     try {
       return UpdatedBookingData(
-        id: json['id'] as int,
-        userId: json['user_id'] as int,
-        serviceId: json['service_id'] as int,
+        // --- SOLUSI: Pastikan semua properti int diparsing dengan aman ---
+        // Ini akan menangani kasus di mana backend mengirimkan angka sebagai string.
+        id: json['id'] is int
+            ? json['id'] as int
+            : int.parse(json['id'].toString()),
+        userId: json['user_id'] is int
+            ? json['user_id'] as int
+            : int.parse(json['user_id'].toString()),
+        serviceId: json['service_id'] is int
+            ? json['service_id'] as int
+            : int.parse(json['service_id'].toString()),
+        // --- Akhir Solusi ---
         bookingTime: DateTime.parse(json['booking_time'] as String),
         status: json['status'] as String,
         createdAt: DateTime.parse(json['created_at'] as String),
@@ -87,45 +96,4 @@ class UpdateBookingResponse {
     debugPrint('UpdateBookingResponse.toJson: Generated JSON: $jsonMap');
     return jsonMap;
   }
-}
-
-
-void main() {
-  final String jsonString = """
-  {
-      "message": "Booking berhasil diperbarui",
-      "data": {
-          "id": 1,
-          "user_id": 2,
-          "service_id": 1,
-          "booking_time": "2025-06-21T15:30:00",
-          "status": "confirmed",
-          "created_at": "2025-06-23T08:29:59.000000Z",
-          "updated_at": "2025-06-23T08:32:09.000000Z"
-      }
-  }
-  """;
-
-  debugPrint('--- Starting Update Booking Parsing Debug (json_serializable) ---');
-  final Map<String, dynamic> jsonMap = json.decode(jsonString);
-  debugPrint('Main: Decoded raw JSON map: $jsonMap');
-
-  try {
-    final UpdateBookingResponse response = UpdateBookingResponse.fromJson(jsonMap);
-
-    debugPrint('--- Parsing Successful! ---');
-    debugPrint('Message: ${response.message}');
-    debugPrint('Updated Booking ID: ${response.data.id}');
-    debugPrint('New Status: ${response.data.status}');
-    debugPrint('Updated At: ${response.data.updatedAt}');
-
-    debugPrint('--- Testing toJson Debug (json_serializable) ---');
-    final Map<String, dynamic> convertedJson = response.toJson();
-    debugPrint('Main: Converted object back to JSON map: $convertedJson');
-
-  } catch (e) {
-    debugPrint('--- Parsing Failed! (json_serializable) ---');
-    debugPrint('Error during parsing: $e');
-  }
-  debugPrint('--- End Update Booking Parsing Debug (json_serializable) ---');
 }

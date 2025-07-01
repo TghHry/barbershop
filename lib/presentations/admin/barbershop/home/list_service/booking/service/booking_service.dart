@@ -6,9 +6,9 @@ import 'dart:io'; // For SocketException
 import 'dart:async'; // For TimeoutException
 
 // Import your BookingResponse model (for create)
-import 'package:barbershop2/presentations/admin/barbershop/list_service/booking/models/booking_model.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/list_service/booking/models/booking_model.dart';
 // Import your UpdateBookingResponse model (for update)
-import 'package:barbershop2/presentations/admin/barbershop/history/update/models/update_models.dart'; // Make sure this import is correct
+import 'package:barbershop2/presentations/admin/barbershop/home/history/update/models/update_models.dart'; // Make sure this import is correct
 
 // Define your base URL
 const String baseUrl =

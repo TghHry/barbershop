@@ -8,7 +8,7 @@ import 'dart:async'; // For TimeoutException (opsional, jika Anda ingin menangan
 // Pastikan Anda mengimpor model-model ini dari lokasi yang benar di proyek Anda.
 // Ini adalah file yang berisi kelas UpdatedBookingData dan UpdateBookingResponse
 // yang telah diperbaiki (seperti yang Anda tunjukkan di kueri).
-import 'package:barbershop2/presentations/admin/barbershop/history/update/models/update_models.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/history/update/models/update_models.dart';
 
 class ApiService {
   // baseUrl Anda telah diperbarui ke nilai yang Anda berikan.

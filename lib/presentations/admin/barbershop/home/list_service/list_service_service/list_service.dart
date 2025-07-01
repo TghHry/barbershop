@@ -7,7 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For secu
 
 // Import your ServiceListResponse model
 // Adjust the path according to your project structure
-import 'package:barbershop2/presentations/admin/barbershop/list_service/list_service_models/list_service_model.dart'; // Make sure this import is correct
+import 'package:barbershop2/presentations/admin/barbershop/home/list_service/list_service_models/list_service_model.dart'; // Make sure this import is correct
 
 // Define your base URL
 const String baseUrl =

@@ -1,12 +1,12 @@
-import 'package:barbershop2/presentations/admin/barbershop/history/delete/models/delete_model.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/history/delete/models/delete_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // For debugPrint
 import 'package:go_router/go_router.dart'; // For potential navigation from this screen (e.g., back)
 import 'package:intl/intl.dart'; // For date formatting (add intl: ^0.18.1 to pubspec.yaml)
 
-import 'package:barbershop2/presentations/admin/barbershop/history/delete/delete_service.dart';
-import 'package:barbershop2/presentations/admin/barbershop/history/history_service/history_service.dart'; // Adjust path if needed
-import 'package:barbershop2/presentations/admin/barbershop/history/history_models/history_model.dart'; // Adjust path if needed
+import 'package:barbershop2/presentations/admin/barbershop/home/history/delete/delete_service.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/history/history_service/history_service.dart'; // Adjust path if needed
+import 'package:barbershop2/presentations/admin/barbershop/home/history/history_models/history_model.dart'; // Adjust path if needed
 
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
@@ -149,7 +149,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      // backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text('My Bookings'),
         centerTitle: true,
@@ -350,56 +350,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                           if (booking.status.toLowerCase() == 'pending')
                             Row(
                               children: [
-                                // Align(
-                                //   alignment: Alignment.bottomRight,
-                                //   child: TextButton(
-                                //     onPressed: () {
-                                //       // Jika Anda ingin tombol ini untuk RE-BOOK (booking baru berdasarkan yang lama)
-                                //       // Kondisi bisa disesuaikan, misalnya hanya untuk booking yang 'completed' atau 'cancelled'
-                                //       // Untuk contoh ini, saya akan izinkan untuk booking status 'pending' (sesuai snippet Anda sebelumnya)
-                                //       if (booking.status.toLowerCase() ==
-                                //           'pending') {
-                                //         if (mounted) {
-                                //           context.push(
-                                //             '/add_booking', // Ini adalah path GoRouter yang baru
-                                //             extra:
-                                //                 booking, // Melewatkan objek BookingHistoryItem
-                                //           );
-                                //           debugPrint(
-                                //             'MyBookingsScreen: Menavigasi ke /rebook_service dengan booking ID: ${booking.id}',
-                                //           );
-                                //         }
-                                //       } else {
-                                //         ScaffoldMessenger.of(
-                                //           context,
-                                //         ).showSnackBar(
-                                //           SnackBar(
-                                //             content: Text(
-                                //               'Tidak dapat re-book booking berstatus ${booking.status}.',
-                                //             ),
-                                //             backgroundColor: Colors.orange,
-                                //           ),
-                                //         );
-                                //         debugPrint(
-                                //           'MyBookingsScreen: Mencoba re-book non-pending booking. Status: ${booking.status}',
-                                //         );
-                                //       }
-                                //     },
-                                //     child: Text(
-                                //       'Add Booking', // Mengubah teks tombol agar lebih jelas
-                                //       style: TextStyle(
-                                //         color:
-                                //             (booking.status.toLowerCase() ==
-                                //                 'pending')
-                                //             ? Colors.red
-                                //             : Colors
-                                //                   .grey, // Warna tombol disesuaikan
-                                //         fontWeight: FontWeight.bold,
-                                //       ),
-                                //     ),
-                                //   ),
-                                // ),
-                                // Spacer(),
                                 Align(
                                   alignment: Alignment.bottomRight,
                                   child: TextButton(
@@ -471,7 +421,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                                       }
                                     },
                                     child: const Text(
-                                      'Cancel Booking',
+                                      'Delete Booking',
                                       style: TextStyle(color: Colors.red),
                                     ),
                                   ),

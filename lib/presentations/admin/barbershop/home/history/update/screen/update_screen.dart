@@ -1,6 +1,6 @@
-import 'package:barbershop2/presentations/admin/barbershop/history/update/service/update_service.dart';
-import 'package:barbershop2/presentations/admin/barbershop/history/history_models/history_model.dart';
-import 'package:barbershop2/presentations/admin/barbershop/history/update/models/update_models.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/history/update/service/update_service.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/history/history_models/history_model.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/history/update/models/update_models.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart'; // For navigation after update
 
@@ -114,12 +114,12 @@ class _UpdateBookingScreenState extends State<UpdateBookingScreen> {
         'UpdateBookingScreen: Sending status: $_selectedStatus, new time: $finalBookingTime',
       );
 
-      final UpdateBookingResponse response = await _apiService
-          .updateBookingStatus(
-            bookingId: widget.booking.id,
-            status: _selectedStatus!,
-            // bookingTime: finalBookingTime,
-          );
+      final UpdateBookingResponse
+      response = await _apiService.updateBookingStatus(
+        bookingId: widget.booking.id,
+        status: _selectedStatus!,
+        // bookingTime: finalBookingTime, // Ini masih dikomentari, Anda perlu mengaktifkannya di ApiService jika ingin mengirim waktu juga
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -161,14 +161,24 @@ class _UpdateBookingScreenState extends State<UpdateBookingScreen> {
     final selectedFormattedDate =
         _selectedDate == null
             ? 'No date selected'
-            : DateFormat('dd MMMM yyyy').format(_selectedDate!.toLocal());
+            : DateFormat(
+              'dd MMMMyyyy',
+            ).format(_selectedDate!.toLocal()); // Perbaikan format tahun
     final selectedFormattedTime =
         _selectedTime == null
             ? 'No time selected'
             : _selectedTime!.format(context);
 
+    // --- PERUBAHAN DI SINI: Daftar status yang diizinkan sekarang tetap ---
+    List<String> allowedStatuses = ['canceled', 'completed', 'confirmed'];
+    // Pastikan status saat ini ada di dropdown jika belum ada
+    if (!allowedStatuses.contains(widget.booking.status.toLowerCase())) {
+      allowedStatuses.add(widget.booking.status.toLowerCase());
+    }
+    allowedStatuses.sort(); // Urutkan untuk tampilan yang lebih baik
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      // backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text('Edit Booking'),
         backgroundColor: Colors.black,
@@ -178,7 +188,7 @@ class _UpdateBookingScreenState extends State<UpdateBookingScreen> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Card(
-          margin: EdgeInsets.only(top: 10),
+          margin: const EdgeInsets.only(top: 10),
           child: Padding(
             padding: const EdgeInsets.all(10.0),
             child: Column(
@@ -242,13 +252,11 @@ class _UpdateBookingScreenState extends State<UpdateBookingScreen> {
                     border: OutlineInputBorder(),
                     labelText: 'New Status',
                   ),
+                  // --- PERUBAHAN UTAMA DI SINI: Menggunakan allowedStatuses ---
                   items:
-                      <String>[
-                        'pending',
-                        'confirmed',
-                        'cancelled',
-                        'completed',
-                      ].map<DropdownMenuItem<String>>((String value) {
+                      allowedStatuses.map<DropdownMenuItem<String>>((
+                        String value,
+                      ) {
                         return DropdownMenuItem<String>(
                           value: value,
                           child: Text(value.toUpperCase()),

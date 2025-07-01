@@ -7,7 +7,7 @@ import 'dart:async'; // For TimeoutException
 
 // Import your BookingHistoryResponse model
 // Adjust the path according to your project structure
-import 'package:barbershop2/presentations/admin/barbershop/history/history_models/history_model.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/history/history_models/history_model.dart';
 
 // Define your base URL (make sure it's consistent across your services)
 const String baseUrl = 'https://appsalon.mobileprojp.com'; // Your actual base URL

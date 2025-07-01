@@ -117,11 +117,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // appBar: AppBar(
-      //   actions: [
-      //     FloatingActionButton(onPressed: () {}, child: Icon(Icons.add)),
-      //   ],
-      // ),
       body: SingleChildScrollView(
         // Pastikan ini SingleChildScrollView
         padding: const EdgeInsets.all(20.0),
@@ -214,23 +209,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   SizedBox(width: 10),
                   _buildActionButton(
-                    icon: Icons.history,
-                    label: 'My Bookings',
-                    onTap: () {
-                      if (mounted) {
-                        context.push(
-                          '/my_bookings',
-                        ); // Menavigasi ke riwayat booking
-                        debugPrint(
-                          'HomeScreen: "My Bookings" ditekan. Menavigasi ke /my_bookings.',
-                        );
-                      }
-                    },
-                  ),
-                  SizedBox(width: 10),
-                  _buildActionButton(
                     icon: Icons.cut,
-                    label: 'Our Services',
+                    label: 'Layanan Kami',
                     onTap: () {
                       if (mounted) {
                         context.push(
@@ -242,6 +222,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       }
                     },
                   ),
+                  SizedBox(width: 10),
+                  _buildActionButton(
+                    icon: Icons.history,
+                    label: 'Historyku',
+                    onTap: () {
+                      if (mounted) {
+                        context.push(
+                          '/my_bookings',
+                        ); // Menavigasi ke riwayat booking
+                        debugPrint(
+                          'HomeScreen: "My Bookings" ditekan. Menavigasi ke /my_bookings.',
+                        );
+                      }
+                    },
+                  ),
                 ],
               ),
             ),
@@ -249,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Divider(),
             // --- Bagian Upcoming Bookings (Card) ---
             const Text(
-              'Upcoming Bookings',
+              'Update Booking ',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -283,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        'No upcoming bookings.',
+                        'Tidak ada Update Booking.',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -301,15 +296,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             height: 1.5,
                           ),
                           children: <TextSpan>[
-                            TextSpan(text: 'Tap "'),
+                            TextSpan(text: 'Tekan "'),
                             TextSpan(
-                              text: 'Book Now',
+                              text: 'Booking Sekarang',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87,
                               ),
                             ),
-                            TextSpan(text: '" to schedule your visit!'),
+                            TextSpan(text: '" untuk menjadwalkan kunjunganmu!'),
                           ],
                         ),
                       ),

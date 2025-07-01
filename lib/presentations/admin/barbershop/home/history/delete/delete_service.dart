@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:barbershop2/presentations/admin/barbershop/list_service/booking/models/booking_model.dart';
-import 'package:barbershop2/presentations/admin/barbershop/history/delete/models/delete_model.dart';
-import 'package:barbershop2/presentations/admin/barbershop/history/update/models/update_models.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/list_service/booking/models/booking_model.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/history/delete/models/delete_model.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/history/update/models/update_models.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart'; // For debugPrint
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For securely getting the token
