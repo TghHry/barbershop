@@ -29,7 +29,7 @@ class _UpdateBookingScreenState extends State<UpdateBookingScreen> {
   void initState() {
     super.initState();
     // Initialize form fields with current booking data
-    _selectedStatus = widget.booking.status;
+    _selectedStatus = widget.booking.status; // Nilai awal
     _selectedDate = widget.booking.bookingTime;
     _selectedTime = TimeOfDay.fromDateTime(widget.booking.bookingTime);
 
@@ -161,24 +161,67 @@ class _UpdateBookingScreenState extends State<UpdateBookingScreen> {
     final selectedFormattedDate =
         _selectedDate == null
             ? 'No date selected'
-            : DateFormat(
-              'dd MMMMyyyy',
-            ).format(_selectedDate!.toLocal()); // Perbaikan format tahun
+            : DateFormat('dd MMMMyyyy').format(_selectedDate!.toLocal());
     final selectedFormattedTime =
         _selectedTime == null
             ? 'No time selected'
             : _selectedTime!.format(context);
 
-    // --- PERUBAHAN DI SINI: Daftar status yang diizinkan sekarang tetap ---
-    List<String> allowedStatuses = ['canceled', 'completed', 'confirmed'];
-    // Pastikan status saat ini ada di dropdown jika belum ada
-    if (!allowedStatuses.contains(widget.booking.status.toLowerCase())) {
-      allowedStatuses.add(widget.booking.status.toLowerCase());
+    // --- LOGIKA STATUS DINAMIS BERDASARKAN ATURAN TRANSISI BACKEND ---
+    List<String> allowedStatuses = [];
+    String currentStatusLower = widget.booking.status.toLowerCase();
+
+    debugPrint(
+      'UpdateBookingScreen: Current booking status (lowercase): $currentStatusLower',
+    );
+
+    // Aturan transisi status yang umum (sesuaikan dengan backend Anda)
+    // Menggunakan ejaan 'cancelled' (dua 'l') secara konsisten.
+    // Memastikan 'completed' bisa diakses dari 'confirmed'.
+    if (currentStatusLower == 'pending') {
+      allowedStatuses.addAll([
+        'confirmed',
+        'cancelled',
+      ]); // Menggunakan 'cancelled'
+    } else if (currentStatusLower == 'confirmed') {
+      allowedStatuses.addAll([
+        'completed',
+        'cancelled',
+      ]); // Menggunakan 'completed' dan 'cancelled'
+    } else if (currentStatusLower == 'cancelled' ||
+        currentStatusLower == 'completed') {
+      // Jika sudah 'cancelled' atau 'completed', biasanya tidak bisa diubah lagi.
+      // Hanya tampilkan status saat ini sebagai pilihan (tidak bisa diubah).
+      allowedStatuses.add(currentStatusLower);
+    } else {
+      // Untuk status lain yang tidak terduga, atau status awal yang tidak ada di atas,
+      // tambahkan semua status yang mungkin sebagai fallback.
+      allowedStatuses.addAll([
+        'pending',
+        'confirmed',
+        'completed',
+        'cancelled',
+      ]); // Menggunakan 'cancelled'
     }
-    allowedStatuses.sort(); // Urutkan untuk tampilan yang lebih baik
+
+    // Pastikan status saat ini selalu ada di dropdown (jika belum ada dari logika di atas)
+    if (!allowedStatuses.contains(currentStatusLower)) {
+      allowedStatuses.add(currentStatusLower);
+    }
+
+    // Hapus duplikat dan urutkan untuk tampilan yang lebih baik
+    allowedStatuses = allowedStatuses.toSet().toList();
+    allowedStatuses.sort();
+
+    debugPrint(
+      'UpdateBookingScreen: Final allowed statuses for dropdown: $allowedStatuses',
+    );
+    debugPrint(
+      'UpdateBookingScreen: Currently selected status for dropdown value: $_selectedStatus',
+    );
 
     return Scaffold(
-      // backgroundColor: Colors.black,
+      // backgroundColor: Colors.black, // Jika Anda ingin gradien, ini harus transparan dan menggunakan Stack
       appBar: AppBar(
         title: const Text('Edit Booking'),
         backgroundColor: Colors.black,
@@ -252,7 +295,6 @@ class _UpdateBookingScreenState extends State<UpdateBookingScreen> {
                     border: OutlineInputBorder(),
                     labelText: 'New Status',
                   ),
-                  // --- PERUBAHAN UTAMA DI SINI: Menggunakan allowedStatuses ---
                   items:
                       allowedStatuses.map<DropdownMenuItem<String>>((
                         String value,
