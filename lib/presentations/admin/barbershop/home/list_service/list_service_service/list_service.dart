@@ -1,99 +1,119 @@
 import 'dart:convert';
-import 'dart:io'; // For SocketException
-import 'dart:async'; // For TimeoutException
+import 'package:barbershop2/presentations/admin/barbershop/home/list_service/list_service_models/list_service_model.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart'; // For debugPrint
-import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // For securely getting the token
+import 'package:flutter/foundation.dart'; // Untuk debugPrint
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // Untuk securely getting the token
+import 'dart:io'; // Untuk SocketException
+import 'dart:async'; // Untuk TimeoutException
 
-// Import your ServiceListResponse model
-// Adjust the path according to your project structure
-import 'package:barbershop2/presentations/admin/barbershop/home/list_service/list_service_models/list_service_model.dart'; // Make sure this import is correct
+// Import model yang baru Anda buat
+// import 'package:barbershop2/presentations/admin/barbershop/home/list_service/list_service_models/service_list_response_model.dart';
+// Jika ServiceListResponseModel sudah mengimpor ServiceItemModel,
+// Anda mungkin tidak perlu mengimpor ServiceItemModel secara eksplisit di sini.
 
-// Define your base URL
+// Definisi base URL Anda
 const String baseUrl =
-    'https://appsalon.mobileprojp.com'; // Your actual base URL
+    'https://appsalon.mobileprojp.com'; // Ganti dengan URL API Anda yang sebenarnya
 
-class ServiceService {
+class ServiceListService {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
-  // Method to fetch the list of services
-  Future<ServiceListResponse> getServices() async {
-    final url = Uri.parse('$baseUrl/api/services');
-    debugPrint('ServiceService: Attempting to fetch services from URL: $url');
+  /// Mengambil daftar layanan dari API.
+  /// Membutuhkan token otentikasi dari FlutterSecureStorage.
+  Future<ServiceListResponse> getServiceList() async {
+    final url = Uri.parse(
+      '$baseUrl/api/services',
+    ); // Asumsi endpoint API untuk daftar layanan
+    debugPrint(
+      'ServiceListService: Attempting to fetch service list from: $url',
+    );
 
     try {
-      // Retrieve the authentication token from secure storage
+      // Ambil token otentikasi dari secure storage
       final String? token = await _secureStorage.read(key: 'auth_token');
+
       if (token == null) {
         debugPrint(
-          'ServiceService: Authentication token not found. Cannot fetch services.',
+          'ServiceListService: Authentication token not found. Cannot fetch service list.',
         );
         throw Exception('Authentication token not found. Please log in.');
       }
 
       debugPrint(
-        'ServiceService: Found token. Making GET request with Authorization header.',
+        'ServiceListService: Found token. Making GET request with Authorization header.',
       );
 
-      final response = await http.get(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token', // Include the Bearer token
-        },
-      );
+      // Lakukan permintaan HTTP GET
+      final response = await http
+          .get(
+            url,
+            headers: {
+              'Accept':
+                  'application/json', // Memberi tahu server kita menginginkan JSON
+              'Authorization': 'Bearer $token', // Sertakan token otentikasi
+            },
+          )
+          .timeout(
+            const Duration(seconds: 15),
+          ); // Tambahkan timeout untuk mencegah permintaan tak terbatas
 
       debugPrint(
-        'ServiceService: Response Status Code: ${response.statusCode}',
+        'ServiceListService: Response Status Code: ${response.statusCode}',
       );
-      debugPrint('ServiceService: Response Body: ${response.body}');
+      debugPrint('ServiceListService: Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
-        // Successful response
+        // Jika respons 200 OK, parse data
         final Map<String, dynamic> responseData = json.decode(response.body);
-        debugPrint(
-          'ServiceService: Services fetched successfully! Parsing response...',
-        );
-        final ServiceListResponse serviceResponse =
+        // Menggunakan factory constructor fromJson dari ServiceListResponse
+        final ServiceListResponse serviceListResponse =
             ServiceListResponse.fromJson(responseData);
         debugPrint(
-          'ServiceService: Parsed ${serviceResponse.data.length} services.',
+          'ServiceListService: Successfully parsed service list response.',
         );
-        return serviceResponse;
+        return serviceListResponse;
       } else if (response.statusCode == 401) {
-        // Unauthorized - token might be expired or invalid
+        // Tangani Unauthorized (token tidak valid/kadaluarsa)
         debugPrint(
-          'ServiceService: Unauthorized access (401). Token might be expired or invalid.',
+          'ServiceListService: Unauthorized access (401). Token might be expired or invalid.',
         );
         throw Exception(
           'Unauthorized. Your session may have expired. Please log in again.',
         );
       } else {
-        // Handle other API errors
+        // Tangani kode status HTTP lainnya (misal: 400, 404, 500)
         final Map<String, dynamic> errorData = json.decode(response.body);
         String errorMessage =
-            errorData['message'] ??
-            'Failed to fetch services. Please try again.';
-        debugPrint('ServiceService: API Error: $errorMessage');
+            errorData['message'] ?? 'Failed to fetch service list.';
+
+        // Coba ekstrak pesan error lebih detail dari 'errors' jika ada
+        if (errorData.containsKey('errors') && errorData['errors'] is Map) {
+          errorData['errors'].forEach((key, value) {
+            errorMessage +=
+                '\n${(value as List).join(', ')}'; // Menggabungkan pesan error dari array
+          });
+        }
+        debugPrint('ServiceListService: API Error: $errorMessage');
         throw Exception(errorMessage);
       }
     } on SocketException catch (e) {
-      // No internet connection
+      // Tangani error koneksi internet
       debugPrint(
-        'ServiceService: Network error (SocketException): ${e.message}',
+        'ServiceListService: Network error (SocketException): ${e.message}',
       );
       throw Exception(
         'Tidak ada koneksi internet. Mohon periksa koneksi Anda.',
       );
     } on TimeoutException catch (e) {
-      // Request timed out
-      debugPrint('ServiceService: Request timed out (TimeoutException): $e');
+      // Tangani error jika permintaan habis waktu
+      debugPrint(
+        'ServiceListService: Request timed out (TimeoutException): $e',
+      );
       throw Exception('Permintaan ke server habis waktu. Coba lagi.');
     } catch (e) {
-      // Any other unexpected errors
-      debugPrint('ServiceService: An unexpected error occurred: $e');
-      throw Exception('Terjadi kesalahan tidak terduga: $e');
+      // Tangani error tak terduga lainnya
+      debugPrint('ServiceListService: An unexpected error occurred: $e');
+      throw Exception('Terjadi kesalahan tidak terduga: ${e.toString()}');
     }
   }
 }

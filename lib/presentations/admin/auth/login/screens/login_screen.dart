@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // Import flutter_secure_storage
-import 'dart:async'; // For TimeoutException
-import 'dart:io'; // For SocketException
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:async';
+import 'dart:io';
+import 'dart:ui'; // Diperlukan untuk ImageFilter
 
 // Correct imports for your services and models
-import 'package:barbershop2/presentations/admin/auth/login/services/login_service.dart'; // Assuming your AuthService is here
-import 'package:barbershop2/presentations/admin/auth/login/models/login_model.dart'; // Assuming your LoginResponse model is here
+import 'package:barbershop2/presentations/admin/auth/login/services/login_service.dart';
+import 'package:barbershop2/presentations/admin/auth/login/models/login_model.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -25,13 +26,11 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool isLoading = false;
 
-  // Create an instance of FlutterSecureStorage
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   @override
   void initState() {
     super.initState();
-    // Optional: Add a debug print to check if a token already exists on screen load
     _checkExistingToken();
   }
 
@@ -42,8 +41,6 @@ class _LoginScreenState extends State<LoginScreen> {
       debugPrint(
         'LoginScreen: Found existing token (length: ${existingToken.length}) in secure storage.',
       );
-      // In a real app, you might validate this token or automatically navigate
-      // context.go('/home'); // Example: Auto-login if valid token exists
     } else {
       debugPrint('LoginScreen: No existing token found in secure storage.');
     }
@@ -77,14 +74,12 @@ class _LoginScreenState extends State<LoginScreen> {
       final token = res.data.token;
       final user = res.data.user;
 
-      // --- Store token securely using FlutterSecureStorage ---
       debugPrint('LoginScreen: Attempting to save token to secure storage...');
       await _secureStorage.write(key: 'auth_token', value: token);
       debugPrint(
         'LoginScreen: Token successfully saved to secure storage. Token length: ${token.length}',
       );
 
-      // --- Store other user info in SharedPreferences (non-sensitive) ---
       debugPrint(
         'LoginScreen: Attempting to save user details to SharedPreferences...',
       );
@@ -104,9 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
 
-        context.go(
-          '/home',
-        ); // IMPORTANT: Replace '/home' with your actual home route path
+        context.go('/home');
         debugPrint('LoginScreen: Navigating to /home after successful login.');
       }
     } catch (e) {
@@ -152,7 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF0A0F1E),
       body: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -162,34 +155,100 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(height: 150),
-                  const Icon(
-                    Icons.switch_access_shortcut_sharp,
-                    size: 80,
-                    color: Colors.black,
+                  const SizedBox(height: 80),
+                  Stack(
+                    // *** DIHAPUS 'const' di sini ***
+                    alignment: Alignment.center,
+                    children: [
+                      // Efek glow yang diblur
+                      Positioned.fill(
+                        child: Opacity(
+                          opacity: 0.5, // Sesuaikan opacity glow
+                          child: ImageFiltered(
+                            imageFilter: ImageFilter.blur(
+                              sigmaX: 10,
+                              sigmaY: 10,
+                            ), // Sesuaikan intensitas blur
+                            child: ColorFiltered(
+                              colorFilter: const ColorFilter.mode(
+                                // *** DITAMBAHKAN 'const' di sini ***
+                                Colors
+                                    .amberAccent, // Warna glow (tanpa opacity di sini, karena Opacity di luar)
+                                BlendMode.srcATop,
+                              ),
+                              child: Image.asset(
+                                'assets/images/logo.png', // Path aset logo Anda
+                                fit: BoxFit.contain,
+                                // *** DIHAPUS: properti 'color' di sini, ColorFiltered sudah menanganinya ***
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Logo utama
+                      Image.asset(
+                        'assets/images/logo.png', // Path aset logo Anda
+                        height: 120, // Sesuaikan ukuran logo
+                        width: 120,
+                        fit: BoxFit.contain,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Scukur.in',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  // const Text(
-                  //   'BARBERSHOP',
-                  //   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  // ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 40),
                   const Text(
                     'Log In',
-                    style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber,
+                    ),
                   ),
                   const SizedBox(height: 40),
                   TextFormField(
                     keyboardType: TextInputType.emailAddress,
                     controller: _emailController,
-                    decoration: const InputDecoration(
-                      hintText: "Enter your email address",
-                      labelText: 'Email Address',
-                      border: OutlineInputBorder(),
+                    style: TextStyle(
+                      color: Colors.grey[200],
+                    ), // Teks input berwarna abu-abu terang
+                    decoration: InputDecoration(
+                      // Menggunakan InputDecoration tanpa const karena fillcolor
+                      hintText:
+                          "Masukkan alamat email Anda", // Diubah ke Bahasa Indonesia
+                      hintStyle: TextStyle(
+                        color: Colors.grey[600],
+                      ), // Hint text lebih gelap
+                      labelText: 'Alamat Email', // Diubah ke Bahasa Indonesia
+                      labelStyle: const TextStyle(
+                        color: Colors.grey,
+                      ), // Label berwarna abu-abu
+                      filled: true, // Mengaktifkan pengisian warna background
+                      fillColor: Colors.white.withOpacity(
+                        0.05,
+                      ), // Background textfield sedikit transparan
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: Colors.grey,
+                        ), // Border abu-abu saat tidak fokus
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: Colors.white,
+                        ), // Border putih saat fokus
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                        ), // Border merah untuk error
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                        ), // Border merah saat error dan fokus
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -205,10 +264,34 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
+                    style: TextStyle(
+                      color: Colors.grey[200],
+                    ), // Teks input berwarna abu-abu terang
                     decoration: InputDecoration(
-                      labelText: 'Password',
-                      hintText: "Enter your password",
-                      border: const OutlineInputBorder(),
+                      // Menggunakan InputDecoration tanpa const
+                      labelText: 'Password', // Diubah ke Bahasa Indonesia
+                      hintText:
+                          "Masukkan password Anda", // Diubah ke Bahasa Indonesia
+                      hintStyle: TextStyle(color: Colors.grey[600]),
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.05),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.white),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.red),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.red),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       suffixIcon: IconButton(
                         onPressed: () {
                           setState(() {
@@ -219,6 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           _obscurePassword
                               ? Icons.visibility_off
                               : Icons.visibility,
+                          color: Colors.grey, // Warna ikon visibility
                         ),
                       ),
                     ),
@@ -233,25 +317,40 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 20),
-                  SizedBox(
+                  Container(
                     width: 370,
                     height: 48,
-                    child: ElevatedButton(
-                      onPressed: isLoading ? null : login,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFD700), Color(0xFFDAA520)],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
                       ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x80FFD700),
+                          blurRadius: 15,
+                          spreadRadius: 2,
+                          offset: Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: MaterialButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: isLoading ? null : login,
                       child:
                           isLoading
                               ? const CircularProgressIndicator(
-                                color: Colors.white,
+                                color: Colors.black,
                               )
                               : const Text(
-                                "Login",
-                                style: TextStyle(color: Colors.white),
+                                "Login", // Diubah ke Bahasa Indonesia
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                     ),
                   ),
@@ -259,15 +358,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text("Don’t have an account? "),
+                      const Text(
+                        "Belum punya akun?", // Diubah ke Bahasa Indonesia
+                        style: TextStyle(color: Colors.amber),
+                      ),
                       TextButton(
                         onPressed: () {
                           context.go('/register');
                         },
                         child: const Text(
-                          'Sign Up',
+                          'Daftar', // Diubah ke Bahasa Indonesia
                           style: TextStyle(
-                            color: Colors.black,
+                            color: Colors.amber,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

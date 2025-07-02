@@ -1,12 +1,10 @@
-import 'package:barbershop2/presentations/admin/barbershop/home/history/delete/models/delete_model.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'; // For debugPrint
-import 'package:go_router/go_router.dart'; // For potential navigation from this screen (e.g., back)
-import 'package:intl/intl.dart'; // For date formatting (add intl: ^0.18.1 to pubspec.yaml)
+import 'package:flutter/foundation.dart'; // Untuk debugPrint
+import 'package:go_router/go_router.dart'; // Untuk navigasi (misalnya, kembali)
+import 'package:intl/intl.dart'; // Untuk pemformatan tanggal
 
-import 'package:barbershop2/presentations/admin/barbershop/home/history/delete/delete_service.dart';
-import 'package:barbershop2/presentations/admin/barbershop/home/history/history_service/history_service.dart'; // Adjust path if needed
-import 'package:barbershop2/presentations/admin/barbershop/home/history/history_models/history_model.dart'; // Adjust path if needed
+import 'package:barbershop2/presentations/admin/barbershop/home/history/history_service/history_service.dart'; // Sesuaikan path jika diperlukan
+import 'package:barbershop2/presentations/admin/barbershop/home/history/history_models/history_model.dart'; // Sesuaikan path jika diperlukan
 
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
@@ -18,160 +16,174 @@ class MyBookingsScreen extends StatefulWidget {
 class _MyBookingsScreenState extends State<MyBookingsScreen> {
   final BookingHistoryService _bookingHistoryService = BookingHistoryService();
   late Future<BookingHistoryResponse> _bookingHistoryFuture;
-  bool _isDeletingBooking = false; // <--- ADD THIS LINE HERE
-  final BookingService _bookingService =
-      BookingService(); // <--- VERIFY/ADD THIS LINE
 
   @override
   void initState() {
     super.initState();
     _bookingHistoryFuture =
         _bookingHistoryService
-            .getBookingHistory(); // Initiate fetching booking history
+            .getBookingHistory(); // Memulai pengambilan riwayat pemesanan
     debugPrint(
-      'MyBookingsScreen: Initiating booking history fetch in initState...',
+      'MyBookingsScreen: Memulai pengambilan riwayat pemesanan di initState...', // Diubah
     );
   }
 
-  // Function to handle pull-to-refresh action
+  // Fungsi untuk menangani aksi pull-to-refresh
   Future<void> _refreshBookingHistory() async {
-    debugPrint('MyBookingsScreen: Pull-to-refresh triggered.');
+    debugPrint('MyBookingsScreen: Pull-to-refresh dipicu.'); // Diubah
     setState(() {
       _bookingHistoryFuture =
-          _bookingHistoryService.getBookingHistory(); // Re-initiate fetching
+          _bookingHistoryService
+              .getBookingHistory(); // Memulai pengambilan ulang
     });
-    // Await the future so RefreshIndicator knows when to stop
+    // Menunggu future selesai agar RefreshIndicator tahu kapan harus berhenti
     await _bookingHistoryFuture;
-    debugPrint('MyBookingsScreen: Booking history refreshed successfully!');
+    debugPrint(
+      'MyBookingsScreen: Riwayat pemesanan berhasil diperbarui!',
+    ); // Diubah
   }
 
-  // --- NEW: Function to show Delete Confirmation Dialog ---
-  Future<void> _showDeleteConfirmationDialog(BookingHistoryItem booking) async {
-    bool? confirmDelete = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Delete Booking?'),
-          content: Text(
-            'Are you sure you want to delete the booking for "${booking.service.name}" on ${DateFormat('dd MMMM yyyy HH:mm').format(booking.bookingTime.toLocal())}?',
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(dialogContext).pop(false); // User cancelled
-              },
-            ),
-            ElevatedButton(
-              child:
-                  _isDeletingBooking // Show loading if deleting
-                      ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                      : const Text(
-                        'Delete',
-                        style: TextStyle(color: Colors.white),
-                      ), // White text for dark button
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red, // Red for delete action
-              ),
-              onPressed:
-                  _isDeletingBooking
-                      ? null
-                      : () {
-                        Navigator.of(dialogContext).pop(true); // User confirmed
-                      },
-            ),
-          ],
-        );
-      },
-    );
+  // --- Fungsi untuk menampilkan Dialog Konfirmasi Hapus (saat ini dikomentari) ---
+  // Future<void> _showDeleteConfirmationDialog(BookingHistoryItem booking) async {
+  //   bool? confirmDelete = await showDialog<bool>(
+  //     context: context,
+  //     builder: (BuildContext dialogContext) {
+  //       return AlertDialog(
+  //         title: const Text('Hapus Pemesanan?'), // Diubah
+  //         content: Text(
+  //           'Apakah Anda yakin ingin menghapus pemesanan untuk "${booking.service.name}" pada ${DateFormat('dd MMMM yyyy HH:mm').format(booking.bookingTime.toLocal())}?', // Diubah
+  //         ),
+  //         actions: <Widget>[
+  //           TextButton(
+  //             child: const Text('Batal'), // Diubah
+  //             onPressed: () {
+  //               Navigator.of(dialogContext).pop(false); // Pengguna membatalkan
+  //             },
+  //           ),
+  //           ElevatedButton(
+  //             child:
+  //                 _isDeletingBooking // Tampilkan loading jika sedang menghapus
+  //                     ? const SizedBox(
+  //                         width: 20,
+  //                         height: 20,
+  //                         child: CircularProgressIndicator(
+  //                           color: Colors.white,
+  //                           strokeWidth: 2,
+  //                         ),
+  //                       )
+  //                     : const Text(
+  //                         'Hapus', // Diubah
+  //                         style: TextStyle(color: Colors.white),
+  //                       ), // Teks putih untuk tombol gelap
+  //             style: ElevatedButton.styleFrom(
+  //               backgroundColor: Colors.red, // Merah untuk aksi hapus
+  //             ),
+  //             onPressed:
+  //                 _isDeletingBooking
+  //                     ? null
+  //                     : () {
+  //                         Navigator.of(dialogContext).pop(true); // Pengguna mengonfirmasi
+  //                       },
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
 
-    if (confirmDelete == true) {
-      debugPrint(
-        'MyBookingsScreen: User confirmed delete for booking ID: ${booking.id}',
-      );
-      await _deleteBooking(booking.id); // Proceed with deletion
-    } else {
-      debugPrint('MyBookingsScreen: Delete action cancelled by user.');
-    }
-  }
+  //   if (confirmDelete == true) {
+  //     debugPrint(
+  //       'MyBookingsScreen: Pengguna mengonfirmasi penghapusan booking ID: ${booking.id}', // Diubah
+  //     );
+  //     await _deleteBooking(booking.id); // Lanjutkan dengan penghapusan
+  //   } else {
+  //     debugPrint('MyBookingsScreen: Aksi penghapusan dibatalkan oleh pengguna.'); // Diubah
+  //   }
+  // }
 
-  // --- NEW: Function to handle the actual Delete API call ---
-  Future<void> _deleteBooking(int bookingId) async {
-    setState(() {
-      _isDeletingBooking = true; // Set loading state for the delete action
-    });
+  // --- Fungsi untuk menangani panggilan API Hapus yang sebenarnya (saat ini dikomentari) ---
+  // Future<void> _deleteBooking(int bookingId) async {
+  //   setState(() {
+  //     _isDeletingBooking = true; // Atur status loading untuk aksi hapus
+  //   });
 
-    try {
-      debugPrint('MyBookingsScreen: Calling deleteBooking for ID: $bookingId');
-      final DeleteBookingResponse deleteRes = await _bookingService
-          .deleteBooking(bookingId: bookingId);
+  //   try {
+  //     debugPrint('MyBookingsScreen: Memanggil deleteBooking untuk ID: $bookingId'); // Diubah
+  //     final DeleteBookingResponse deleteRes = await _bookingService
+  //         .deleteBooking(bookingId: bookingId);
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(deleteRes.message),
-            backgroundColor: Colors.green,
-          ),
-        );
-        debugPrint(
-          'MyBookingsScreen: Booking ID $bookingId deleted successfully! Message: ${deleteRes.message}',
-        );
-        _refreshBookingHistory(); // Refresh the list to remove the deleted item
-      }
-    } catch (e) {
-      debugPrint('MyBookingsScreen: Failed to delete booking: $e');
-      if (mounted) {
-        String errorMessage = e.toString().replaceFirst('Exception: ', '');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to delete: $errorMessage'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      setState(() {
-        _isDeletingBooking = false; // Reset loading state
-      });
-      debugPrint(
-        'MyBookingsScreen: Delete booking loading state set to false.',
-      );
-    }
-  }
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text(deleteRes.message),
+  //           backgroundColor: Colors.green,
+  //         ),
+  //       );
+  //       debugPrint(
+  //         'MyBookingsScreen: Booking ID $bookingId berhasil dihapus! Pesan: ${deleteRes.message}', // Diubah
+  //       );
+  //       _refreshBookingHistory(); // Perbarui daftar untuk menghapus item yang dihapus
+  //     }
+  //   } catch (e) {
+  //     debugPrint('MyBookingsScreen: Gagal menghapus booking: $e'); // Diubah
+  //     if (mounted) {
+  //       String errorMessage = e.toString().replaceFirst('Exception: ', '');
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Gagal menghapus: $errorMessage'), // Diubah
+  //           backgroundColor: Colors.red,
+  //         ),
+  //       );
+  //     }
+  //   } finally {
+  //     setState(() {
+  //       _isDeletingBooking = false; // Reset status loading
+  //     });
+  //     debugPrint(
+  //       'MyBookingsScreen: Status loading penghapusan booking diatur ke false.', // Diubah
+  //     );
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF1A2233),
       appBar: AppBar(
-        title: const Text('My Bookings'),
+        title: const Text('Riwayat Pemesanan Saya'), // Diubah
         centerTitle: true,
-        backgroundColor: Colors.black,
+        backgroundColor: const Color(0xFF1A2233),
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () {
+            if (context.canPop()) {
+              // Menggunakan context.canPop() dari go_router
+              context.pop(); // Menggunakan context.pop() dari go_router
+            } else {
+              debugPrint(
+                'MyBookingsScreen: Tidak ada halaman sebelumnya untuk di-pop.', // Diubah
+              );
+              // Contoh: Jika ini halaman pertama setelah login, bisa arahkan ke home atau keluar aplikasi
+              // context.go('/home');
+            }
+          },
+        ),
       ),
       body: RefreshIndicator(
-        // Added RefreshIndicator for pull-to-refresh
         onRefresh: _refreshBookingHistory,
         child: FutureBuilder<BookingHistoryResponse>(
-          future: _bookingHistoryFuture, // The future we're waiting for
+          future: _bookingHistoryFuture, // Future yang kita tunggu
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               debugPrint(
-                'MyBookingsScreen: ConnectionState.waiting - showing CircularProgressIndicator.',
+                'MyBookingsScreen: ConnectionState.waiting - menampilkan CircularProgressIndicator.', // Diubah
               );
               return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
               debugPrint(
                 'MyBookingsScreen: snapshot.hasError - ${snapshot.error}',
               );
-              // Display an error message and a retry button
+              // Tampilkan pesan error dan tombol coba lagi
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -185,38 +197,37 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        'Error: ${snapshot.error}',
+                        'Terjadi Kesalahan: ${snapshot.error}', // Diubah
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: Colors.red, fontSize: 16),
                       ),
                       const SizedBox(height: 10),
                       ElevatedButton(
                         onPressed: () {
-                          _refreshBookingHistory(); // Retry fetching when button is pressed
+                          _refreshBookingHistory(); // Coba lagi pengambilan data saat tombol ditekan
                           debugPrint(
-                            'MyBookingsScreen: Retrying fetch on error button tap.',
+                            'MyBookingsScreen: Mencoba ulang pengambilan data saat tombol error diketuk.', // Diubah
                           );
                         },
-                        child: const Text('Retry'),
+                        child: const Text('Coba Lagi'), // Diubah
                       ),
                     ],
                   ),
                 ),
               );
             } else if (snapshot.hasData) {
-              final bookings =
-                  snapshot.data!.data; // Access the list of booking items
+              final bookings = snapshot.data!.data; // Akses daftar item booking
               debugPrint(
-                'MyBookingsScreen: Data loaded. Number of bookings: ${bookings.length}',
+                'MyBookingsScreen: Data dimuat. Jumlah booking: ${bookings.length}', // Diubah
               );
 
               if (bookings.isEmpty) {
-                // If there are no bookings, ensure RefreshIndicator still works by using a scrollable widget
+                // Jika tidak ada booking, pastikan RefreshIndicator tetap berfungsi dengan menggunakan widget yang dapat di-scroll
                 return ListView(
                   children: const [
                     SizedBox(
                       height: 100,
-                    ), // Add some spacing for visual centering
+                    ), // Tambahkan spasi untuk penempatan di tengah secara visual
                     Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -228,11 +239,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                           ),
                           SizedBox(height: 10),
                           Text(
-                            'You have no past or upcoming bookings.',
+                            'Anda tidak memiliki pemesanan yang lalu atau akan datang.', // Diubah
+                            textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 16, color: Colors.grey),
                           ),
                           Text(
-                            'Book a service to see it here!',
+                            'Pesan layanan untuk melihatnya di sini!', // Diubah
                             style: TextStyle(fontSize: 14, color: Colors.grey),
                           ),
                         ],
@@ -242,19 +254,18 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 );
               }
 
-              // Display the list of bookings using ListView.builder
+              // Tampilkan daftar booking menggunakan ListView.builder
               return ListView.builder(
                 padding: const EdgeInsets.all(8.0),
                 itemCount: bookings.length,
                 itemBuilder: (context, index) {
                   final booking = bookings[index];
-                  // Format booking time for user-friendly display
-                  // Ensure 'intl' package is added to pubspec.yaml
+                  // Format waktu booking untuk tampilan yang mudah dibaca pengguna
                   final formattedTime = DateFormat(
-                    'EEEE, dd MMMM yyyy HH:mm',
+                    'EEEE, dd MMMM yyyy HH:mm', // Ditambah tahun untuk kejelasan
                   ).format(booking.bookingTime.toLocal());
 
-                  // Determine status color for visual feedback
+                  // Tentukan warna status untuk umpan balik visual
                   Color statusColor;
                   switch (booking.status.toLowerCase()) {
                     case 'pending':
@@ -274,6 +285,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   }
 
                   return Card(
+                    color: const Color(0xFF2B3A4F),
                     margin: const EdgeInsets.symmetric(
                       vertical: 8.0,
                       horizontal: 4.0,
@@ -288,15 +300,16 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Service: ${booking.service.name}',
+                            'Layanan: ${booking.service.name}', // Diubah
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
+                              color: Colors.amber,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Description: ${booking.service.description}',
+                            'Deskripsi: ${booking.service.description}', // Diubah
                             style: const TextStyle(
                               fontSize: 14,
                               color: Colors.grey,
@@ -304,7 +317,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Price: Rp${booking.service.price}',
+                            'Harga: Rp${NumberFormat('#,##0', 'id_ID').format(double.parse(booking.service.price))}', // Diubah, menggunakan NumberFormat
                             style: const TextStyle(
                               fontSize: 16,
                               color: Colors.green,
@@ -321,8 +334,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Scheduled: $formattedTime',
-                                style: const TextStyle(fontSize: 14),
+                                'Terjadwal: $formattedTime', // Diubah
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.amber,
+                                ),
                               ),
                             ],
                           ),
@@ -336,7 +352,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Status: ${booking.status.toUpperCase()}',
+                                'Status: ${booking.status.toUpperCase()}', // Diubah
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -345,8 +361,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                               ),
                             ],
                           ),
-                          SizedBox(height: 10),
-                          // Optional: Add actions like "Cancel Booking" or "View Details"
+                          const SizedBox(height: 10),
+                          // Opsional: Tambahkan aksi seperti "Batalkan Pemesanan" atau "Lihat Detail"
                           if (booking.status.toLowerCase() == 'pending')
                             Row(
                               children: [
@@ -354,18 +370,18 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                                   alignment: Alignment.bottomRight,
                                   child: TextButton(
                                     onPressed: () {
-                                      // Only allow update if status is 'pending' for example
+                                      // Hanya izinkan pembaruan jika status 'pending' misalnya
                                       if (booking.status.toLowerCase() ==
                                           'pending') {
-                                        // --- Navigate to UpdateBookingScreen, passing the booking item ---
+                                        // --- Navigasi ke UpdateBookingScreen, meneruskan item booking ---
                                         if (mounted) {
                                           context.push(
-                                            '/update_booking_detail', // This is the GoRouter path
+                                            '/update_booking_detail', // Ini adalah path GoRouter
                                             extra:
-                                                booking, // Pass the entire booking item as 'extra'
+                                                booking, // Teruskan seluruh item booking sebagai 'extra'
                                           );
                                           debugPrint(
-                                            'MyBookingsScreen: Navigating to /update_booking_detail with booking ID: ${booking.id}',
+                                            'MyBookingsScreen: Navigasi ke /update_booking_detail dengan booking ID: ${booking.id}', // Diubah
                                           );
                                         }
                                       } else {
@@ -374,58 +390,48 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                                         ).showSnackBar(
                                           SnackBar(
                                             content: Text(
-                                              'Cannot update a ${booking.status} booking.',
+                                              'Tidak dapat memperbarui pemesanan berstatus ${booking.status}.', // Diubah
                                             ),
                                             backgroundColor: Colors.orange,
                                           ),
                                         );
                                         debugPrint(
-                                          'MyBookingsScreen: Attempted to update non-pending booking. Status: ${booking.status}',
+                                          'MyBookingsScreen: Mencoba memperbarui booking yang tidak pending. Status: ${booking.status}', // Diubah
                                         );
                                       }
                                     },
                                     child: const Text(
-                                      'Update Booking',
-                                      style: TextStyle(color: Colors.red),
+                                      'Perbarui Pemesanan', // Diubah
+                                      style: TextStyle(
+                                        color: Colors.amber,
+                                      ), // Diubah warna agar lebih jelas
                                     ),
                                   ),
                                 ),
-                                Spacer(),
-                                Align(
-                                  alignment: Alignment.bottomRight,
-                                  child: TextButton(
-                                    onPressed: () {
-                                      // Typically, delete is allowed for pending or cancelled, but depends on logic
-                                      // Let's allow delete for 'pending' or 'cancelled' bookings
-                                      if (booking.status.toLowerCase() ==
-                                              'pending' ||
-                                          booking.status.toLowerCase() ==
-                                              'cancelled') {
-                                        _showDeleteConfirmationDialog(
-                                          booking,
-                                        ); // Show confirmation dialog
-                                      } else {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Cannot delete a ${booking.status} booking.',
-                                            ),
-                                            backgroundColor: Colors.orange,
-                                          ),
-                                        );
-                                        debugPrint(
-                                          'MyBookingsScreen: Attempted to delete non-eligible booking. Status: ${booking.status}',
-                                        );
-                                      }
-                                    },
-                                    child: const Text(
-                                      'Delete Booking',
-                                      style: TextStyle(color: Colors.red),
-                                    ),
-                                  ),
-                                ),
+                                const Spacer(),
+                                // Bagian tombol hapus yang dikomentari, sesuaikan jika akan diaktifkan
+                                // Align(
+                                //   alignment: Alignment.bottomRight,
+                                //   child: TextButton(
+                                //     onPressed: () {
+                                //       if (booking.status.toLowerCase() == 'pending' || booking.status.toLowerCase() == 'cancelled') {
+                                //         _showDeleteConfirmationDialog(booking); // Tampilkan dialog konfirmasi
+                                //       } else {
+                                //         ScaffoldMessenger.of(context).showSnackBar(
+                                //           SnackBar(
+                                //             content: Text('Tidak dapat menghapus pemesanan berstatus ${booking.status}.'), // Diubah
+                                //             backgroundColor: Colors.orange,
+                                //           ),
+                                //         );
+                                //         debugPrint('MyBookingsScreen: Mencoba menghapus booking yang tidak memenuhi syarat. Status: ${booking.status}',);
+                                //       }
+                                //     },
+                                //     child: const Text(
+                                //       'Hapus Pemesanan', // Diubah
+                                //       style: TextStyle(color: Colors.red),
+                                //     ),
+                                //   ),
+                                // ),
                               ],
                             ),
                         ],
@@ -436,8 +442,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
               );
             }
             return const Center(
-              child: Text('No data.'),
-            ); // Fallback for initial empty state
+              child: Text('Tidak ada data.'),
+            ); // Fallback untuk status kosong awal
           },
         ),
       ),

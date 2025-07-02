@@ -11,6 +11,8 @@ import 'package:barbershop2/presentations/admin/barbershop/home/list_service/boo
 class BookingDetailScreen extends StatefulWidget {
   final ServiceItem service; // This screen receives the selected service
 
+  // <<< KOREKSI DI SINI >>>
+  // Hapus 'required int serviceId' dari konstruktor
   const BookingDetailScreen({super.key, required this.service});
 
   @override
@@ -117,10 +119,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       );
 
       final BookingResponse response = await _bookingService.createBooking(
-        userId: userId,
-        serviceId: widget.service.id,
-        bookingTime: finalBookingTime,
-      );
+  userId: userId,
+  serviceId: widget.service.id!, // Aman karena sudah dicheck di atas
+  bookingTime: finalBookingTime,
+);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -158,14 +160,39 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF1A2233),
       appBar: AppBar(
         title: const Text('Book Service'),
-        backgroundColor: Colors.black,
+        backgroundColor: const Color(0xFF1A2233),
         foregroundColor: Colors.white,
+        centerTitle: true,
+        leading: IconButton(
+          // <<< KOREKSI: Mengganti Container dengan IconButton
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: Colors.white,
+          ), // Ikon panah kembali
+          onPressed: () {
+            // Navigator.pop(context) akan mengembalikan ke halaman sebelumnya.
+            // Jika ini adalah halaman paling atas (root) di stack navigasi,
+            // Anda mungkin perlu logika yang berbeda (misalnya, context.go('/home')).
+            if (Navigator.of(context).canPop()) {
+              // Periksa apakah ada halaman sebelumnya
+              Navigator.of(context).pop();
+            } else {
+              // Contoh: Jika ini halaman pertama setelah login, bisa arahkan ke home atau keluar aplikasi
+              // context.go('/home'); // Opsi: kembali ke home screen jika tidak bisa pop
+              debugPrint(
+                'ProfileScreen: Tidak ada halaman sebelumnya untuk di-pop.',
+              );
+            }
+          },
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Card(
+          color: const Color(0xFF2B3A4F),
           child: Padding(
             padding: const EdgeInsets.all(15.0),
             child: Column(
@@ -174,37 +201,49 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 Text(
                   'Booking: ${widget.service.name}',
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: Color(0xFFFFD700),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Price: Rp${widget.service.price}',
-                  style: const TextStyle(fontSize: 18, color: Colors.green),
+                  'Harga: Rp${widget.service.price}',
+                  style: const TextStyle(fontSize: 18, color: Colors.white),
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  widget.service.description,
-                  style: const TextStyle(fontSize: 16),
+                  widget.service.description ??
+                      'Tidak ada deskripsi', // Baris 188
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
                 ),
                 const SizedBox(height: 24),
 
                 // Date Selection
                 const Text(
                   'Select Date:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white54,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 ListTile(
-                  leading: const Icon(Icons.calendar_today),
+                  leading: const Icon(
+                    Icons.calendar_today,
+                    color: Colors.white54,
+                  ),
                   title: Text(
                     _selectedDate == null
                         ? 'No date selected'
                         : 'Date: ${_selectedDate!.toLocal().toString().split(' ')[0]}',
-                    style: const TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 16, color: Colors.white54),
                   ),
-                  trailing: const Icon(Icons.arrow_forward_ios),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.white54,
+                  ),
                   onTap: () => _selectDate(context),
                 ),
                 const SizedBox(height: 16),
@@ -212,18 +251,25 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 // Time Selection
                 const Text(
                   'Select Time:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white54,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 ListTile(
-                  leading: const Icon(Icons.access_time),
+                  leading: const Icon(Icons.access_time, color: Colors.white54),
                   title: Text(
                     _selectedTime == null
                         ? 'No time selected'
                         : 'Time: ${_selectedTime!.format(context)}',
-                    style: const TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 16, color: Colors.white54),
                   ),
-                  trailing: const Icon(Icons.arrow_forward_ios),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.white54,
+                  ),
                   onTap: () => _selectTime(context),
                 ),
                 const SizedBox(height: 32),
@@ -235,7 +281,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _bookService,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
+                      backgroundColor: Colors.amber,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -251,6 +297,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
+                                color: Colors.black,
                               ),
                             ),
                   ),

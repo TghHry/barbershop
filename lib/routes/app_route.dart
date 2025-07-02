@@ -1,15 +1,14 @@
 import 'package:barbershop2/presentations/admin/auth/login/screens/login_screen.dart'; // Ensure correct path for LoginScreen
 import 'package:barbershop2/presentations/admin/auth/register/screens/register_screen.dart'; // Ensure correct path for RegisterScreen
 import 'package:barbershop2/presentations/admin/barbershop/home/add_service/screens/add_service_screen.dart';
-// import 'package:barbershop2/presentations/admin/barbershop/booking/screens/booking_screen.dart';
 import 'package:barbershop2/presentations/admin/barbershop/home/history/history_models/history_model.dart';
 import 'package:barbershop2/presentations/admin/barbershop/home/history/history_screens/history_screen.dart';
-import 'package:barbershop2/presentations/admin/barbershop/home/screens/home_screen.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/home_screens/home_screen.dart';
 import 'package:barbershop2/presentations/admin/barbershop/home/list_service/booking/screens/booking_screen.dart';
 import 'package:barbershop2/presentations/admin/barbershop/home/list_service/list_service_models/list_service_model.dart';
-// import 'package:barbershop2/presentations/admin/barbershop/list_service/models/list_service_model.dart';
 import 'package:barbershop2/presentations/admin/barbershop/home/list_service/list_service_screens/list_screen.dart';
 import 'package:barbershop2/presentations/admin/barbershop/home/history/update/screen/update_screen.dart';
+import 'package:barbershop2/presentations/admin/barbershop/home/profile/screens/profile_screen.dart';
 import 'package:barbershop2/utils/splash.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -33,6 +32,13 @@ final GoRouter router = GoRouter(
           (context, state) =>
               LoginScreen(), // Assuming LoginScreen takes no arguments
     ),
+     GoRoute(
+      path: '/profile',
+      name: 'profile',
+      builder: (BuildContext context, GoRouterState state) {
+        return const ProfileScreen();
+      },
+    ),
     // You can add more routes here as your app grows, e.g.:
     GoRoute(path: '/home', builder: (context, state) => HomeScreen()),
     GoRoute(
@@ -40,35 +46,32 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const ServicesListScreen(),
     ),
     GoRoute(
-      path:
-          '/booking_service_detail', // PATH YANG BENAR UNTUK BOOKING DETAIL SCREEN
+      path: '/booking_service_detail', // Path tanpa parameter ID di sini
       builder: (context, state) {
-        // Ketika menavigasi ke '/add_booking', kita MENGHARAPKAN objek ServiceItem
-        // yang dilewatkan melalui parameter 'extra' dari rute sebelumnya (misalnya dari ServicesListScreen).
-        final ServiceItem? service = state.extra as ServiceItem?;
+        final ServiceItem? service = state.extra as ServiceItem?; // Menerima objek ServiceItem dari 'extra'
 
-        // Penting: Lakukan pengecekan null untuk keamanan.
-        // Jika 'service' tidak ada (misalnya, jika user langsung mengetik path di URL browser),
-        // kita bisa menampilkan pesan error atau mengarahkan kembali.
         if (service == null) {
-          return Scaffold(
+          // Tangani jika objek layanan tidak diteruskan (misalnya, jika user mengetik URL langsung)
+          debugPrint('BookingDetailScreen: Objek layanan null, navigasi tidak valid.');
+          return  Scaffold(
             appBar: AppBar(title: Text('Error')),
             body: Center(
               child: Text(
-                'Detail layanan tidak disediakan untuk booking baru. Mohon pilih layanan terlebih dahulu.',
+                'Detail layanan tidak disediakan. Mohon pilih layanan terlebih dahulu.',
+                textAlign: TextAlign.center,
               ),
             ),
           );
         }
-        // Jika 'service' ada, kita membangun BookingDetailScreen dan melewatkan objek layanan tersebut.
-        return BookingDetailScreen(service: service);
+        // Teruskan objek service yang tidak null ke konstruktor
+        return BookingDetailScreen(service: service); // <<< INI SEKARANG BENAR
       },
     ),
      GoRoute(
       path: '/add_booking', // Path yang akan digunakan untuk menavigasi ke AddBooking
       name: 'add_booking', // Nama rute untuk navigasi berdasarkan nama
       builder: (context, state) {
-        return  AddBooking(); // Mengembalikan instance dari widget AddBooking
+        return  AddBookingScreen(); // Mengembalikan instance dari widget AddBooking
       },
     ),
     GoRoute(
