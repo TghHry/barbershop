@@ -167,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Widget untuk menampilkan daftar barber shop horizontal
   Widget _buildBarberShopsList() {
     return SizedBox(
-      height: 270, // Tinggi tetap untuk ListView horizontal
+      height: 300, // Tinggi tetap untuk ListView horizontal
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: barberShops.length,
